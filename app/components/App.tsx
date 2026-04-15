@@ -3,8 +3,27 @@
 import { useState } from "react";
 import Dictionary from "./Dictionary";
 import Interview from "./Interview";
+import Patterns from "./Patterns";
 
-type Tab = "reference" | "interview";
+type Tab = "reference" | "interview" | "patterns";
+
+const TABS: { id: Tab; label: string; activeClass: string }[] = [
+  {
+    id: "reference",
+    label: "레퍼런스",
+    activeClass: "bg-yellow-400/20 text-yellow-300 border-yellow-500/40",
+  },
+  {
+    id: "patterns",
+    label: "디자인 패턴",
+    activeClass: "bg-blue-400/20 text-blue-300 border-blue-500/40",
+  },
+  {
+    id: "interview",
+    label: "CS / 면접",
+    activeClass: "bg-red-400/20 text-red-300 border-red-500/40",
+  },
+];
 
 export default function App() {
   const [tab, setTab] = useState<Tab>("reference");
@@ -25,26 +44,19 @@ export default function App() {
 
         {/* 탭 버튼 */}
         <div className="flex gap-1 shrink-0">
-          <button
-            onClick={() => handleTabChange("reference")}
-            className={`px-2.5 py-0.5 rounded text-[12px] font-medium transition-colors ${
-              tab === "reference"
-                ? "bg-yellow-400/20 text-yellow-300 border border-yellow-500/40"
-                : "text-zinc-500 border border-zinc-700 hover:text-zinc-300 hover:border-zinc-500"
-            }`}
-          >
-            레퍼런스
-          </button>
-          <button
-            onClick={() => handleTabChange("interview")}
-            className={`px-2.5 py-0.5 rounded text-[12px] font-medium transition-colors ${
-              tab === "interview"
-                ? "bg-red-400/20 text-red-300 border border-red-500/40"
-                : "text-zinc-500 border border-zinc-700 hover:text-zinc-300 hover:border-zinc-500"
-            }`}
-          >
-            CS / 면접
-          </button>
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => handleTabChange(t.id)}
+              className={`px-2.5 py-0.5 rounded text-[12px] font-medium transition-colors border ${
+                tab === t.id
+                  ? t.activeClass
+                  : "text-zinc-500 border-zinc-700 hover:text-zinc-300 hover:border-zinc-500"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
         </div>
 
         {/* 검색 */}
@@ -74,6 +86,7 @@ export default function App() {
 
       {/* 탭 콘텐츠 */}
       {tab === "reference" && <Dictionary query={query} />}
+      {tab === "patterns"  && <Patterns  query={query} />}
       {tab === "interview" && <Interview query={query} />}
     </>
   );

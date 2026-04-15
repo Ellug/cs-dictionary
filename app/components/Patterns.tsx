@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { interviewSections, type InterviewSection, type InterviewItem } from "../data/cs-interview";
+import { patternSections, type PatternSection, type PatternItem } from "../data/cs-patterns";
 
 function highlight(text: string, query: string) {
   if (!query) return <>{text}</>;
@@ -18,10 +18,15 @@ function highlight(text: string, query: string) {
   );
 }
 
-function InterviewCard({ item, color, query }: { item: InterviewItem; color: InterviewSection["color"]; query: string }) {
-  const [open, setOpen] = useState(!!query);
+const CATEGORY_COLOR: Record<PatternItem["category"], string> = {
+  생성: "text-yellow-500 border-yellow-700 bg-yellow-500/10",
+  구조: "text-zinc-400 border-zinc-600 bg-zinc-500/10",
+  행동: "text-red-400 border-red-700 bg-red-500/10",
+  아키텍처: "text-blue-400 border-blue-700 bg-blue-500/10",
+};
 
-  // query 있으면 강제 펼침
+function PatternCard({ item, color, query }: { item: PatternItem; color: PatternSection["color"]; query: string }) {
+  const [open, setOpen] = useState(!!query);
   const isOpen = query ? true : open;
 
   const termClass =
@@ -41,30 +46,42 @@ function InterviewCard({ item, color, query }: { item: InterviewItem; color: Int
           {isOpen ? "▾" : "▸"}
         </span>
         <div className="flex-1 min-w-0">
-          <span className={termClass}>{highlight(item.term, query)}</span>
-          <span className="text-zinc-400 text-[12px] ml-2 leading-snug">
-            — {highlight(item.oneliner, query)}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className={termClass}>{highlight(item.term, query)}</span>
+            <span className={`text-[9px] px-1 border rounded ${CATEGORY_COLOR[item.category]}`}>
+              {item.category}
+            </span>
+          </div>
+          <span className="text-zinc-400 text-[12px] leading-snug block mt-[1px]">
+            {highlight(item.oneliner, query)}
           </span>
         </div>
       </button>
 
       {isOpen && (
-        <ul className="px-3 pb-2 space-y-[3px] border-t border-zinc-800 pt-1.5">
-          {item.detail.map((d, i) => (
-            <li key={i} className="flex gap-1.5 items-baseline">
-              <span className="text-zinc-600 text-[11px] shrink-0">•</span>
-              <span className="text-zinc-200 text-[12px] leading-snug font-mono">
-                {highlight(d, query)}
-              </span>
-            </li>
-          ))}
-        </ul>
+        <div className="border-t border-zinc-800">
+          <ul className="px-3 py-2 space-y-[3px]">
+            {item.detail.map((d, i) => (
+              <li key={i} className="flex gap-1.5 items-baseline">
+                <span className="text-zinc-600 text-[11px] shrink-0">•</span>
+                <span className="text-zinc-200 text-[12px] leading-snug font-mono">
+                  {highlight(d, query)}
+                </span>
+              </li>
+            ))}
+          </ul>
+          {item.csharp && (
+            <pre className="mx-2 mb-2 px-2 py-1.5 bg-zinc-900 border border-zinc-700 rounded text-[11px] text-green-300 leading-relaxed overflow-x-auto whitespace-pre-wrap">
+              {highlight(item.csharp, query)}
+            </pre>
+          )}
+        </div>
       )}
     </div>
   );
 }
 
-function InterviewSectionBlock({ sec, query }: { sec: InterviewSection; query: string }) {
+function PatternSectionBlock({ sec, query }: { sec: PatternSection; query: string }) {
   const titleClass =
     sec.color === "yellow"
       ? "text-yellow-400 font-bold text-base"
@@ -77,7 +94,9 @@ function InterviewSectionBlock({ sec, query }: { sec: InterviewSection; query: s
         (item) =>
           item.term.toLowerCase().includes(query.toLowerCase()) ||
           item.oneliner.toLowerCase().includes(query.toLowerCase()) ||
-          item.detail.some((d) => d.toLowerCase().includes(query.toLowerCase()))
+          item.category.toLowerCase().includes(query.toLowerCase()) ||
+          item.detail.some((d) => d.toLowerCase().includes(query.toLowerCase())) ||
+          item.csharp?.toLowerCase().includes(query.toLowerCase())
       )
     : sec.items;
 
@@ -87,18 +106,19 @@ function InterviewSectionBlock({ sec, query }: { sec: InterviewSection; query: s
     <div className="mb-4 break-inside-avoid">
       <div className="mb-1.5 px-1">
         <span className={titleClass}>{sec.title}</span>
+        <span className="text-zinc-600 text-[11px] ml-2">{filteredItems.length}개</span>
       </div>
       {filteredItems.map((item) => (
-        <InterviewCard key={item.term} item={item} color={sec.color} query={query} />
+        <PatternCard key={item.term} item={item} color={sec.color} query={query} />
       ))}
     </div>
   );
 }
 
-export default function Interview({ query }: { query: string }) {
+export default function Patterns({ query }: { query: string }) {
   const filtered = useMemo(
     () =>
-      interviewSections.filter((sec) => {
+      patternSections.filter((sec) => {
         if (!query) return true;
         const q = query.toLowerCase();
         return (
@@ -107,7 +127,9 @@ export default function Interview({ query }: { query: string }) {
             (item) =>
               item.term.toLowerCase().includes(q) ||
               item.oneliner.toLowerCase().includes(q) ||
-              item.detail.some((d) => d.toLowerCase().includes(q))
+              item.category.toLowerCase().includes(q) ||
+              item.detail.some((d) => d.toLowerCase().includes(q)) ||
+              item.csharp?.toLowerCase().includes(q)
           )
         );
       }),
@@ -125,7 +147,7 @@ export default function Interview({ query }: { query: string }) {
   return (
     <div className="columns-[480px] gap-3">
       {filtered.map((sec) => (
-        <InterviewSectionBlock key={sec.id} sec={sec} query={query} />
+        <PatternSectionBlock key={sec.id} sec={sec} query={query} />
       ))}
     </div>
   );
