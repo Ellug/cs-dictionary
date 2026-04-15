@@ -21,22 +21,22 @@ function highlight(text: string, query: string) {
 function MethodRow({ m, color, query }: { m: MethodItem; color: Section["color"]; query: string }) {
   const nameClass =
     color === "yellow"
-      ? "text-yellow-200 text-[13px] font-mono"
+      ? "text-yellow-200 text-[14px] font-mono"
       : color === "red"
-        ? "text-red-300 text-[13px] font-mono"
-        : "text-orange-300 text-[13px] font-mono";
+        ? "text-red-300 text-[14px] font-mono"
+        : "text-orange-300 text-[14px] font-mono";
 
   return (
     <div className="px-2 py-1 grid grid-cols-[1fr_1.6fr] gap-x-2 items-start hover:bg-zinc-800/70 transition-colors">
       <div className="min-w-0">
         <code className={nameClass + " break-all leading-snug block"}>{highlight(m.name, query)}</code>
         {m.example && (
-          <code className="text-zinc-500 text-[11px] leading-snug block">
+          <code className="text-zinc-500 text-[12px] leading-snug block">
             ex: {m.example}
           </code>
         )}
       </div>
-      <span className="text-zinc-200 text-[12px] leading-snug">
+      <span className="text-zinc-200 text-[13px] leading-snug">
         {highlight(m.desc, query)}
       </span>
     </div>
@@ -65,7 +65,7 @@ function SectionCard({ sec, query }: { sec: Section; query: string }) {
     <div className="break-inside-avoid mb-3 border border-zinc-700 bg-[#141414] rounded">
       <div className="px-2 py-1 border-b border-zinc-700 flex items-baseline gap-2 flex-wrap">
         <span className={titleClass}>{sec.title}</span>
-        <span className="text-zinc-400 text-[11px] leading-tight">{sec.summary}</span>
+        <span className="text-zinc-400 text-[12px] leading-tight">{sec.summary}</span>
       </div>
       <div className="divide-y divide-zinc-800">
         {filteredMethods.map((m) => (

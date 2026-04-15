@@ -31,10 +31,10 @@ function PatternCard({ item, color, query }: { item: PatternItem; color: Pattern
 
   const termClass =
     color === "yellow"
-      ? "text-yellow-300 font-bold text-[13px]"
+      ? "text-yellow-300 font-bold text-[14px]"
       : color === "red"
-        ? "text-red-300 font-bold text-[13px]"
-        : "text-white font-bold text-[13px]";
+        ? "text-red-300 font-bold text-[14px]"
+        : "text-white font-bold text-[14px]";
 
   return (
     <div className="border border-zinc-700 bg-[#141414] rounded mb-2 break-inside-avoid">
@@ -42,17 +42,17 @@ function PatternCard({ item, color, query }: { item: PatternItem; color: Pattern
         className="w-full text-left px-2 py-1.5 flex items-start gap-2 hover:bg-zinc-800/60 transition-colors"
         onClick={() => setOpen((v) => !v)}
       >
-        <span className="text-zinc-600 text-[11px] mt-[2px] shrink-0 select-none">
+        <span className="text-zinc-600 text-[12px] mt-[2px] shrink-0 select-none">
           {isOpen ? "▾" : "▸"}
         </span>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className={termClass}>{highlight(item.term, query)}</span>
-            <span className={`text-[9px] px-1 border rounded ${CATEGORY_COLOR[item.category]}`}>
+            <span className={`text-[12px] px-1.5 border rounded ${CATEGORY_COLOR[item.category]}`}>
               {item.category}
             </span>
           </div>
-          <span className="text-zinc-400 text-[12px] leading-snug block mt-[1px]">
+          <span className="text-zinc-400 text-[13px] leading-snug block mt-[1px]">
             {highlight(item.oneliner, query)}
           </span>
         </div>
@@ -63,15 +63,15 @@ function PatternCard({ item, color, query }: { item: PatternItem; color: Pattern
           <ul className="px-3 py-2 space-y-[3px]">
             {item.detail.map((d, i) => (
               <li key={i} className="flex gap-1.5 items-baseline">
-                <span className="text-zinc-600 text-[11px] shrink-0">•</span>
-                <span className="text-zinc-200 text-[12px] leading-snug font-mono">
+                <span className="text-zinc-600 text-[12px] shrink-0">•</span>
+                <span className="text-zinc-200 text-[13px] leading-snug font-mono">
                   {highlight(d, query)}
                 </span>
               </li>
             ))}
           </ul>
           {item.csharp && (
-            <pre className="mx-2 mb-2 px-2 py-1.5 bg-zinc-900 border border-zinc-700 rounded text-[11px] text-green-300 leading-relaxed overflow-x-auto whitespace-pre-wrap">
+            <pre className="mx-2 mb-2 px-2 py-1.5 bg-zinc-900 border border-zinc-700 rounded text-[12px] text-green-300 leading-relaxed overflow-x-auto whitespace-pre-wrap">
               {highlight(item.csharp, query)}
             </pre>
           )}
@@ -106,7 +106,7 @@ function PatternSectionBlock({ sec, query }: { sec: PatternSection; query: strin
     <div className="mb-4 break-inside-avoid">
       <div className="mb-1.5 px-1">
         <span className={titleClass}>{sec.title}</span>
-        <span className="text-zinc-600 text-[11px] ml-2">{filteredItems.length}개</span>
+        <span className="text-zinc-600 text-[12px] ml-2">{filteredItems.length}개</span>
       </div>
       {filteredItems.map((item) => (
         <PatternCard key={item.term} item={item} color={sec.color} query={query} />

@@ -48,7 +48,7 @@ export default function App() {
             <button
               key={t.id}
               onClick={() => handleTabChange(t.id)}
-              className={`px-2.5 py-0.5 rounded text-[12px] font-medium transition-colors border ${
+              className={`px-2.5 py-0.5 rounded text-[13px] font-medium transition-colors border ${
                 tab === t.id
                   ? t.activeClass
                   : "text-zinc-500 border-zinc-700 hover:text-zinc-300 hover:border-zinc-500"
@@ -70,13 +70,13 @@ export default function App() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="검색..."
-            className="w-full bg-[#1a1a1a] border border-zinc-700 rounded pl-5 pr-6 py-1 text-[12px] text-zinc-100 placeholder:text-zinc-600 outline-none focus:border-yellow-500/60 focus:ring-1 focus:ring-yellow-500/20 transition-colors"
+            className="w-full bg-[#1a1a1a] border border-zinc-700 rounded pl-5 pr-6 py-1 text-[13px] text-zinc-100 placeholder:text-zinc-600 outline-none focus:border-yellow-500/60 focus:ring-1 focus:ring-yellow-500/20 transition-colors"
             autoFocus
           />
           {query && (
             <button
               onClick={() => setQuery("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 text-[10px]"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 text-[11px]"
             >
               ✕
             </button>

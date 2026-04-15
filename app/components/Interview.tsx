@@ -26,10 +26,10 @@ function InterviewCard({ item, color, query }: { item: InterviewItem; color: Int
 
   const termClass =
     color === "yellow"
-      ? "text-yellow-300 font-bold text-[13px]"
+      ? "text-yellow-300 font-bold text-[14px]"
       : color === "red"
-        ? "text-red-300 font-bold text-[13px]"
-        : "text-white font-bold text-[13px]";
+        ? "text-red-300 font-bold text-[14px]"
+        : "text-white font-bold text-[14px]";
 
   return (
     <div className="border border-zinc-700 bg-[#141414] rounded mb-2 break-inside-avoid">
@@ -37,12 +37,12 @@ function InterviewCard({ item, color, query }: { item: InterviewItem; color: Int
         className="w-full text-left px-2 py-1.5 flex items-start gap-2 hover:bg-zinc-800/60 transition-colors"
         onClick={() => setOpen((v) => !v)}
       >
-        <span className="text-zinc-600 text-[11px] mt-[2px] shrink-0 select-none">
+        <span className="text-zinc-600 text-[12px] mt-[2px] shrink-0 select-none">
           {isOpen ? "▾" : "▸"}
         </span>
         <div className="flex-1 min-w-0">
           <span className={termClass}>{highlight(item.term, query)}</span>
-          <span className="text-zinc-400 text-[12px] ml-2 leading-snug">
+          <span className="text-zinc-400 text-[13px] ml-2 leading-snug">
             — {highlight(item.oneliner, query)}
           </span>
         </div>
@@ -52,8 +52,8 @@ function InterviewCard({ item, color, query }: { item: InterviewItem; color: Int
         <ul className="px-3 pb-2 space-y-[3px] border-t border-zinc-800 pt-1.5">
           {item.detail.map((d, i) => (
             <li key={i} className="flex gap-1.5 items-baseline">
-              <span className="text-zinc-600 text-[11px] shrink-0">•</span>
-              <span className="text-zinc-200 text-[12px] leading-snug font-mono">
+              <span className="text-zinc-600 text-[12px] shrink-0">•</span>
+              <span className="text-zinc-200 text-[13px] leading-snug font-mono">
                 {highlight(d, query)}
               </span>
             </li>

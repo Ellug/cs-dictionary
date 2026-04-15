@@ -25,6 +25,7 @@ export const patternSections: PatternSection[] = [
         oneliner: "인스턴스를 전역에 딱 하나만 유지",
         category: "생성",
         detail: [
+          "SOLID: SRP 위반 위험 (전역 상태). 과용 금지. DI 컨테이너 Singleton 라이프타임 권장",
           "private 생성자 + static readonly Instance 프로퍼티",
           "Lazy<T>: 최초 접근 시 생성, 스레드 안전 (LazyThreadSafetyMode.ExecutionAndPublication 기본)",
           "static 필드 초기화: CLR이 타입 초기화 시 스레드 안전 보장",
@@ -42,6 +43,7 @@ export const patternSections: PatternSection[] = [
         oneliner: "객체 생성을 서브클래스에게 위임. 어떤 타입 만들지는 자식이 결정",
         category: "생성",
         detail: [
+          "SOLID: OCP(새 제품 추가 시 기존 코드 수정 없음) + DIP(클라이언트가 추상 Creator만 의존)",
           "Creator 추상 클래스에 abstract Product CreateProduct() 선언",
           "ConcreteCreator가 CreateProduct()를 오버라이드해 구체 타입 반환",
           "클라이언트는 Creator만 알고 구체 타입 몰라도 됨 → OCP 달성",
@@ -57,6 +59,7 @@ export const patternSections: PatternSection[] = [
         oneliner: "연관된 객체 군(패밀리)을 묶어서 생성. 구체 클래스 지정 안 함",
         category: "생성",
         detail: [
+          "SOLID: OCP(새 플랫폼 추가 = 새 Factory만 추가) + DIP(클라이언트가 인터페이스에만 의존)",
           "인터페이스에 CreateButton(), CreateCheckbox() 등 여러 팩토리 메서드 묶음",
           "WindowsFactory, MacFactory 등 구체 팩토리가 각 플랫폼 객체 생성",
           "팩토리 메서드와 차이: 관련 객체 군 전체를 일관되게 교체 가능",
@@ -72,6 +75,7 @@ export const patternSections: PatternSection[] = [
         oneliner: "복잡한 객체를 단계별로 조립. 같은 과정으로 다른 표현 생성 가능",
         category: "생성",
         detail: [
+          "SOLID: SRP(객체 조립 책임 분리) + OCP(새 빌더 추가로 새 표현 지원)",
           "Director가 Builder 인터페이스를 통해 조립 순서 제어",
           "ConcreteBuilder가 실제 부품 조립 후 GetResult()로 반환",
           "C#에서는 메서드 체이닝(Fluent Builder)이 흔함: builder.SetA().SetB().Build()",
@@ -88,6 +92,7 @@ export const patternSections: PatternSection[] = [
         oneliner: "기존 객체를 복사해서 새 객체 생성. 생성 비용이 클 때 유용",
         category: "생성",
         detail: [
+          "SOLID: OCP(기존 클래스 수정 없이 복사 기반 생성 추가) — 직접적 SOLID 연관보단 성능 패턴",
           "ICloneable 인터페이스 또는 직접 Clone() 메서드 구현",
           "얕은 복사(MemberwiseClone): 값 타입/string은 복사, 참조 타입은 주소 공유",
           "깊은 복사: 참조 타입 필드도 재귀적으로 Clone() 호출 또는 직렬화 활용",
@@ -112,6 +117,7 @@ export const patternSections: PatternSection[] = [
         oneliner: "호환되지 않는 인터페이스를 연결. 기존 코드 변경 없이 통합",
         category: "구조",
         detail: [
+          "SOLID: OCP(기존 코드 변경 없이 통합) + SRP(변환 책임만 가짐)",
           "Target 인터페이스를 구현하고 내부에서 Adaptee를 감쌈(컴포지션)",
           "클래스 어댑터: Adaptee를 상속. 다중 상속 가능한 언어에서만 유효",
           "객체 어댑터(컴포지션): C# 권장. Adaptee를 필드로 보유",
@@ -128,6 +134,7 @@ export const patternSections: PatternSection[] = [
         oneliner: "추상화와 구현을 분리해 독립적으로 변경 가능하게",
         category: "구조",
         detail: [
+          "SOLID: OCP(추상/구현 각각 독립 확장) + DIP(추상화가 구현 인터페이스에 의존)",
           "추상 클래스가 구현 인터페이스를 has-a(컴포지션)로 보유",
           "Shape(추상) × Renderer(구현)을 각각 독립적으로 확장 가능",
           "상속 계층 폭발 문제 해결: Shape 3개 × Color 4개 = 12 클래스 → Bridge 사용 시 7개",
@@ -143,6 +150,7 @@ export const patternSections: PatternSection[] = [
         oneliner: "개별 객체와 복합 객체를 동일하게 다룸. 트리 구조 표현",
         category: "구조",
         detail: [
+          "SOLID: LSP(Leaf와 Composite 모두 Component로 대체 가능) + OCP(새 컴포넌트 추가 용이)",
           "Component 인터페이스를 Leaf와 Composite 모두 구현",
           "Composite는 List<IComponent> 보유하고 Execute() 시 재귀 호출",
           "클라이언트는 단일/복합 구분 없이 같은 인터페이스로 처리",
@@ -158,6 +166,7 @@ export const patternSections: PatternSection[] = [
         oneliner: "기존 객체를 감싸서 동적으로 기능 추가. 상속 없이 확장",
         category: "구조",
         detail: [
+          "SOLID: OCP(기존 클래스 수정 없이 기능 추가) + SRP(각 데코레이터가 한 기능만 담당)",
           "Component 인터페이스를 구현하면서 동일 인터페이스 참조 보유",
           "체이닝 가능: new LogDecorator(new CacheDecorator(new Service()))",
           "상속 대신 컴포지션 → 런타임에 조합 변경 가능",
@@ -174,6 +183,7 @@ export const patternSections: PatternSection[] = [
         oneliner: "복잡한 서브시스템에 단순한 단일 진입점 제공",
         category: "구조",
         detail: [
+          "SOLID: SRP(진입점 단일화) + ISP(클라이언트가 필요 없는 서브시스템 직접 알 필요 없음)",
           "내부 복잡도 숨기고 클라이언트에게 간단한 API만 노출",
           "서브시스템 클래스들은 건드리지 않고 퍼사드만 추가 → OCP 유지",
           "레이어드 아키텍처에서 레이어 간 진입점 역할 (서비스 레이어 = 퍼사드)",
@@ -190,6 +200,7 @@ export const patternSections: PatternSection[] = [
         oneliner: "공유 가능한 상태를 분리해 대량 객체의 메모리 절약",
         category: "구조",
         detail: [
+          "SOLID: SRP(내재 상태만 담당) — 직접적 SOLID보다 성능/메모리 최적화 패턴",
           "내재 상태(Intrinsic, 공유·불변): 객체가 공유. 예) 문자 모양, 텍스처",
           "외재 상태(Extrinsic, 컨텍스트): 호출자가 전달. 예) 문자 위치, 색상",
           "팩토리에서 Dictionary로 캐시해두고 같은 내재 상태면 재사용",
@@ -206,6 +217,7 @@ export const patternSections: PatternSection[] = [
         oneliner: "실제 객체 대신 대리자를 두어 접근 제어, 지연 로딩, 로깅 등 처리",
         category: "구조",
         detail: [
+          "SOLID: OCP(실제 객체 수정 없이 부가 기능 추가) + DIP(클라이언트는 인터페이스에만 의존)",
           "Virtual Proxy: 실제 객체 생성을 필요한 순간까지 지연 (lazy loading)",
           "Protection Proxy: 접근 권한 체크. 클라이언트 역할에 따라 다른 동작",
           "Remote Proxy: 원격 객체를 로컬인 것처럼 사용 (gRPC, WCF 클라이언트 스텁)",
@@ -230,6 +242,7 @@ export const patternSections: PatternSection[] = [
         oneliner: "알고리즘군을 캡슐화해 런타임에 교체 가능하게",
         category: "행동",
         detail: [
+          "SOLID: OCP(새 전략 추가 시 Context 수정 없음) + DIP(Context가 인터페이스에만 의존)",
           "Context 클래스가 IStrategy 인터페이스 참조 보유. 행동 위임",
           "ConcreteStrategy를 교체하면 Context 코드 변경 없이 동작이 바뀜",
           "if-else / switch 타입 분기를 제거하는 데 효과적",
@@ -245,6 +258,7 @@ export const patternSections: PatternSection[] = [
         oneliner: "상태 변경을 구독자에게 자동 통보. 발행자는 구독자를 몰라도 됨",
         category: "행동",
         detail: [
+          "SOLID: OCP(새 Observer 추가 시 Subject 수정 없음) + DIP(Subject가 IObserver 인터페이스에만 의존)",
           "Subject가 List<IObserver> 보유. 상태 변경 시 Notify() → 모든 Observer 호출",
           "C#의 event/delegate가 옵저버 패턴 내장 구현 (언어 수준 지원)",
           "IObservable<T>/IObserver<T>: .NET 표준 인터페이스 (Reactive Extensions 기반)",
@@ -261,6 +275,7 @@ export const patternSections: PatternSection[] = [
         oneliner: "요청을 객체로 캡슐화. 실행 취소/재실행, 큐잉, 로깅 가능",
         category: "행동",
         detail: [
+          "SOLID: SRP(Invoker·Command·Receiver 역할 분리) + OCP(새 커맨드 추가 시 Invoker 수정 없음)",
           "ICommand { void Execute(); void Undo(); } 인터페이스",
           "Invoker가 Command 객체를 Stack에 저장. Undo 시 Pop하여 Undo() 호출",
           "Receiver는 실제 작업 수행. Command는 Invoker-Receiver 연결만 담당",
@@ -276,6 +291,7 @@ export const patternSections: PatternSection[] = [
         oneliner: "요청을 처리할 수 있는 핸들러를 체인으로 연결. 처리 못 하면 다음으로",
         category: "행동",
         detail: [
+          "SOLID: SRP(각 핸들러가 하나의 처리 책임) + OCP(새 핸들러를 체인에 삽입해 확장)",
           "Handler가 다음 Handler 참조 보유. Handle() → 처리하거나 _next?.Handle(req) 전달",
           "요청자와 처리자 분리. 처리 순서 런타임에 유연하게 변경 가능",
           "처리가 완료되면 체인 중단 가능. 모든 핸들러를 통과하는 파이프라인과 차이",
@@ -291,6 +307,7 @@ export const patternSections: PatternSection[] = [
         oneliner: "컬렉션 내부 구조 노출 없이 순차 접근",
         category: "행동",
         detail: [
+          "SOLID: SRP(순회 책임을 컬렉션에서 분리) + ISP(클라이언트는 순회 인터페이스만 알면 됨)",
           "IEnumerator<T> { T Current; bool MoveNext(); void Reset(); } 인터페이스",
           "IEnumerable<T>를 구현하면 foreach 문에서 사용 가능",
           "C#의 yield return이 반복자 패턴 구현 자동화 (컴파일러가 상태 머신 생성)",
@@ -307,6 +324,7 @@ export const patternSections: PatternSection[] = [
         oneliner: "객체들이 서로 직접 참조하지 않고 중재자를 통해 소통",
         category: "행동",
         detail: [
+          "SOLID: SRP(각 컴포넌트는 고유 역할만. 통신 책임은 중재자) + DIP(컴포넌트가 IMediator에만 의존)",
           "객체 간 복잡한 의존관계(N:N) → 중재자로 집중(N:1:N)해서 단순화",
           "각 컴포넌트는 IMediator만 알면 됨. 서로를 몰라도 됨",
           "옵저버와 차이: 옵저버는 1:N 단방향, 중재자는 N:N 양방향 조율",
@@ -322,6 +340,7 @@ export const patternSections: PatternSection[] = [
         oneliner: "객체 상태를 외부에 캡슐화해서 저장/복원. Undo/Redo 핵심",
         category: "행동",
         detail: [
+          "SOLID: SRP(상태 저장·관리를 Caretaker로 분리, Originator는 상태만 담당)",
           "Originator: 상태 소유. CreateMemento()로 스냅샷 생성, Restore(m)으로 복원",
           "Memento: 상태 스냅샷. 불변 객체. 외부에서 내용 직접 접근 불가",
           "Caretaker: Memento 보관·관리. 스택에 쌓아서 Undo, 앞으로가면 Redo",
@@ -338,6 +357,7 @@ export const patternSections: PatternSection[] = [
         oneliner: "내부 상태에 따라 객체 동작이 바뀜. 상태별로 클래스 분리",
         category: "행동",
         detail: [
+          "SOLID: SRP(각 State 클래스가 하나의 상태 행동만 담당) + OCP(새 상태 추가 시 기존 State 수정 없음)",
           "Context가 현재 IState 참조 보유. 메서드 호출을 State에 위임",
           "ConcreteState가 동작 구현 + 전환 조건에 따라 ctx.State = new NextState() 설정",
           "if-else/switch로 상태 분기하는 코드를 각 State 클래스로 분산시킴",
@@ -354,6 +374,7 @@ export const patternSections: PatternSection[] = [
         oneliner: "알고리즘 골격을 부모에 정의하고 세부 단계를 자식이 채움",
         category: "행동",
         detail: [
+          "SOLID: OCP(알고리즘 골격 수정 없이 세부 단계만 오버라이드) + DIP(공통 흐름이 추상화에 의존)",
           "abstract class에 public sealed 메서드가 흐름 제어. abstract 메서드가 세부 단계",
           "자식은 전체 흐름 바꾸지 않고 특정 단계(abstract method)만 오버라이드",
           "훅(Hook): virtual로 선언된 빈 메서드. 자식이 선택적으로 오버라이드",
@@ -370,6 +391,7 @@ export const patternSections: PatternSection[] = [
         oneliner: "구조를 바꾸지 않고 새 연산 추가. 더블 디스패치로 구현",
         category: "행동",
         detail: [
+          "SOLID: OCP(새 연산 = 새 Visitor 클래스만 추가) + SRP(Element는 구조만, Visitor는 연산만)",
           "Element의 Accept(IVisitor v) 가 v.Visit(this) 호출 (더블 디스패치)",
           "IVisitor에 Visit 오버로드를 각 Element 타입별로 선언",
           "새 연산 추가 = 새 Visitor 클래스 추가 (기존 코드 수정 없음) → OCP 달성",
@@ -386,6 +408,7 @@ export const patternSections: PatternSection[] = [
         oneliner: "언어의 문법을 클래스로 표현하고 인터프리터로 실행",
         category: "행동",
         detail: [
+          "SOLID: OCP(새 문법 규칙 = 새 Expression 클래스 추가) + SRP(각 Expression이 하나의 규칙만)",
           "문법 규칙 → 클래스 계층으로 매핑 (터미널/비터미널 표현식)",
           "Expression 트리를 재귀적으로 Interpret(context) 호출",
           "TerminalExpression: 리프 노드. 직접 값 계산",
@@ -410,6 +433,7 @@ export const patternSections: PatternSection[] = [
         oneliner: "모델(데이터) - 뷰(화면) - 컨트롤러(로직)로 분리",
         category: "아키텍처",
         detail: [
+          "SOLID: SRP(Model·View·Controller 각각 단일 책임) + OCP(View 교체 시 Model 수정 없음)",
           "Model: 데이터와 비즈니스 로직. DB, 도메인 규칙 포함",
           "View: 화면 렌더링. 데이터 표현만 담당. 모델을 관찰해 갱신",
           "Controller: 사용자 입력 처리 → Model 업데이트 → View 결정",
@@ -426,6 +450,7 @@ export const patternSections: PatternSection[] = [
         oneliner: "뷰모델이 뷰와 모델 사이에서 바인딩 담당. WPF/모바일에 최적",
         category: "아키텍처",
         detail: [
+          "SOLID: SRP(ViewModel이 View 상태와 커맨드만 담당) + DIP(View가 ViewModel 인터페이스에 의존)",
           "ViewModel: View에 바인딩될 프로퍼티 + ICommand. INotifyPropertyChanged 구현",
           "View는 ViewModel만 알고 구독. ViewModel은 View를 전혀 모름 → 테스트 쉬움",
           "양방향 데이터 바인딩: UI 입력 → ViewModel 프로퍼티, VM 변경 → UI 자동 갱신",
@@ -456,6 +481,7 @@ export const patternSections: PatternSection[] = [
         oneliner: "의존성이 항상 내부(도메인)를 향함. 외부 세계와 도메인을 완전히 분리",
         category: "아키텍처",
         detail: [
+          "SOLID: DIP(인프라가 도메인 인터페이스를 구현) + OCP(외부 교체 시 도메인 수정 없음) — SOLID의 집대성",
           "원 구조: Entities(도메인) ← Use Cases ← Interface Adapters ← Frameworks",
           "의존성 규칙: 바깥 원이 안쪽 원에만 의존. 역방향 절대 금지",
           "DB, 프레임워크, UI는 세부 사항. 언제든 교체 가능 (Plug-in Architecture)",
@@ -470,6 +496,7 @@ export const patternSections: PatternSection[] = [
         oneliner: "읽기(Query)와 쓰기(Command) 모델을 완전히 분리",
         category: "아키텍처",
         detail: [
+          "SOLID: SRP(읽기와 쓰기 책임 완전 분리) + OCP(새 Command/Query 핸들러 추가로 확장)",
           "Command: 상태 변경. 반환값 없음(void 또는 생성된 Id만). 부작용 있음",
           "Query: 상태 조회. 부작용 없음. 읽기 최적화 모델(DTO/뷰) 반환",
           "읽기 쓰기 독립적 확장: 쓰기는 정규화 DB, 읽기는 비정규화 뷰/캐시 사용 가능",
@@ -525,6 +552,7 @@ export const patternSections: PatternSection[] = [
         oneliner: "데이터 접근 로직을 비즈니스 로직에서 분리. DIP 달성",
         category: "아키텍처",
         detail: [
+          "SOLID: SRP(데이터 접근 책임만 담당) + DIP(서비스가 IRepository 인터페이스에만 의존)",
           "IRepository<T> 인터페이스 → SqlRepo, MongoRepo, InMemoryRepo 구현 교체 가능",
           "서비스/유스케이스는 IRepository만 알면 됨. DB 종류 몰라도 됨",
           "테스트 시 InMemoryRepository로 DB 없이 빠른 단위 테스트",
@@ -557,6 +585,7 @@ export const patternSections: PatternSection[] = [
         oneliner: "필요한 의존성을 외부에서 주입. 강결합 제거, 테스트 쉬워짐",
         category: "아키텍처",
         detail: [
+          "SOLID: DIP의 핵심 구현 수단. 상위 모듈이 하위 모듈 직접 생성 안 하고 인터페이스로 주입받음",
           "생성자 주입(Constructor): 가장 권장. 의존성이 명시적이고 불변. 테스트 쉬움",
           "속성 주입(Property): 선택적 의존성. 순환 의존성 해결에 사용. 숨겨진 의존성 위험",
           "메서드 주입(Method): 특정 메서드에만 필요한 의존성. 드물게 사용",
@@ -589,6 +618,7 @@ export const patternSections: PatternSection[] = [
         oneliner: "비즈니스 규칙을 객체로 캡슐화. And/Or/Not 조합 가능",
         category: "행동",
         detail: [
+          "SOLID: SRP(각 명세가 하나의 규칙만) + OCP(And/Or로 새 조합 추가 시 기존 명세 수정 없음)",
           "ISpecification<T> { bool IsSatisfiedBy(T entity); Expression<Func<T, bool>> ToExpression(); }",
           "AndSpecification, OrSpecification, NotSpecification으로 조합",
           "Expression<Func<T,bool>>을 반환하면 EF Core가 SQL로 번역 가능",
