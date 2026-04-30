@@ -645,6 +645,86 @@ export const patternSections: PatternSection[] = [
         csharp:
           "// MediatR 파이프라인 Behavior\nclass ValidationBehavior<TReq, TRes> : IPipelineBehavior<TReq, TRes>\n    where TReq : IRequest<TRes> {\n    private readonly IEnumerable<IValidator<TReq>> _validators;\n    public async Task<TRes> Handle(TReq req, RequestHandlerDelegate<TRes> next, CancellationToken ct) {\n        var errors = _validators.SelectMany(v => v.Validate(req).Errors).ToList();\n        if (errors.Any()) throw new ValidationException(errors);\n        return await next(); // 다음 핸들러로\n    }\n}",
       },
+      {
+        term: "캐시 어사이드 (Cache-Aside)",
+        oneliner: "조회 시 캐시 미스면 DB에서 읽고 캐시에 채우는 가장 보편적인 캐시 패턴",
+        category: "아키텍처",
+        detail: [
+          "읽기 흐름: Cache 조회 → 미스면 DB 조회 → 캐시 저장(TTL) → 반환",
+          "쓰기 흐름: DB 갱신 후 캐시 무효화(삭제) 또는 즉시 갱신(write-through 변형)",
+          "장점: 구현 단순, 캐시 장애 시 DB fallback 가능",
+          "단점: 최초 미스 지연(cold start), 동시 미스 시 stampede(쏠림) 가능",
+          "완화: 분산락, single-flight, 확률적 TTL(early refresh) 적용",
+          "면접 포인트: 강한 일관성보다 읽기 성능 최적화에 유리한 패턴임을 명확히 설명",
+          "사용처: 상품 상세, 사용자 프로필, 설정값 조회, 랭킹 스냅샷",
+        ],
+        csharp:
+          "async Task<UserDto?> GetUserAsync(Guid id) {\n    string key = $\"user:{id}\";\n    var cached = await _redis.GetStringAsync(key);\n    if (cached is not null) return JsonSerializer.Deserialize<UserDto>(cached);\n\n    var user = await _repo.GetByIdAsync(id);\n    if (user is null) return null;\n\n    await _redis.SetStringAsync(key, JsonSerializer.Serialize(user), new DistributedCacheEntryOptions {\n        AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)\n    });\n    return user;\n}\n\n// 쓰기 후 무효화\nawait _repo.UpdateAsync(user);\nawait _redis.RemoveAsync($\"user:{user.Id}\");",
+      },
+      {
+        term: "재시도 + 지수 백오프 (Retry with Backoff)",
+        oneliner: "일시 장애(네트워크 타임아웃, 5xx)에 대해 점진적으로 재시도해 성공률을 높임",
+        category: "행동",
+        detail: [
+          "즉시 반복 재시도는 장애 상황에서 트래픽 폭탄을 만들어 더 악화시킬 수 있음",
+          "백오프: 100ms, 200ms, 400ms처럼 지연을 늘려 재시도 간격 확장",
+          "Jitter(랜덤 분산)를 섞어 thundering herd(동시 재시도) 완화",
+          "멱등한 요청(GET, 일부 PUT/DELETE)에 우선 적용, 비멱등 요청은 신중히",
+          "최대 재시도 횟수, 전체 timeout budget, 취소 토큰을 함께 설계해야 안전",
+          "면접 포인트: Retry는 회복 수단이지 무한 반복 수단이 아님(빠른 실패 기준 필요)",
+          "사용처: 외부 API 호출, 메시지 전송, DB 연결 재시도",
+        ],
+        csharp:
+          "async Task<T> RetryAsync<T>(Func<Task<T>> action, int maxRetry = 3) {\n    var rand = new Random();\n    for (int attempt = 0; ; attempt++) {\n        try {\n            return await action();\n        } catch (HttpRequestException) when (attempt < maxRetry) {\n            int delayMs = (int)(Math.Pow(2, attempt) * 100) + rand.Next(0, 80); // jitter\n            await Task.Delay(delayMs);\n        }\n    }\n}",
+      },
+      {
+        term: "서킷 브레이커 (Circuit Breaker)",
+        oneliner: "연쇄 장애를 막기 위해 실패가 누적되면 호출을 잠시 차단하고 빠르게 실패",
+        category: "아키텍처",
+        detail: [
+          "Closed: 정상 호출 상태, 실패율/연속 실패를 관찰",
+          "Open: 임계치 초과 시 호출 차단(fail-fast), downstream 보호",
+          "Half-Open: 일정 시간 후 소량 테스트 호출로 복구 여부 확인",
+          "Retry와 함께 쓰되 순서를 조심해야 함(무의미한 재시도 폭증 방지)",
+          "Fallback 응답(캐시 데이터, 기본값)을 준비하면 사용자 체감 장애를 줄일 수 있음",
+          "면접 포인트: 단순 timeout과의 차이(시스템 전체 보호 관점) 설명",
+          "사용처: 결제 게이트웨이, 외부 인증 API, 추천 서비스 호출",
+        ],
+        csharp:
+          "// Polly 예시\nvar policy = Policy\n    .Handle<HttpRequestException>()\n    .CircuitBreakerAsync(\n        handledEventsAllowedBeforeBreaking: 5,\n        durationOfBreak: TimeSpan.FromSeconds(30)\n    );\n\nvar result = await policy.ExecuteAsync(() => _httpClient.GetAsync(url));",
+      },
+      {
+        term: "아웃박스 패턴 (Transactional Outbox)",
+        oneliner: "DB 상태 변경과 이벤트 발행을 원자적으로 맞춰 데이터/메시지 불일치 방지",
+        category: "아키텍처",
+        detail: [
+          "문제: DB 커밋 후 메시지 발행이 실패하면 시스템 간 상태 불일치 발생",
+          "해결: 같은 DB 트랜잭션에서 비즈니스 데이터 + Outbox 테이블 레코드 함께 저장",
+          "별도 폴러/퍼블리셔가 Outbox를 읽어 브로커로 발행하고 성공 시 상태 갱신",
+          "최소 한 번(at-least-once) 전달이 기본이므로 소비자는 멱등 처리 필요",
+          "중복 방지 키(eventId)와 발행 상태 관리(Pending/Sent/Failed)가 핵심",
+          "면접 포인트: 2PC 없이도 실용적 일관성(eventual consistency) 달성하는 대표 패턴",
+          "사용처: 주문 생성 후 결제/배송 이벤트 발행, 사용자 가입 후 메일 발송 트리거",
+        ],
+        csharp:
+          "// 같은 트랜잭션에서 처리\nawait using var tx = await _db.Database.BeginTransactionAsync();\n_db.Orders.Add(order);\n_db.OutboxMessages.Add(new OutboxMessage {\n    EventId = Guid.NewGuid(),\n    Type = \"OrderCreated\",\n    Payload = JsonSerializer.Serialize(new { order.Id, order.UserId }),\n    Status = \"Pending\"\n});\nawait _db.SaveChangesAsync();\nawait tx.CommitAsync();\n\n// 백그라운드 퍼블리셔가 Pending 메시지 발행 후 Sent로 전환",
+      },
+      {
+        term: "사가 패턴 (Saga)",
+        oneliner: "분산 트랜잭션을 로컬 트랜잭션 + 보상 작업으로 분해해 서비스 간 일관성 유지",
+        category: "아키텍처",
+        detail: [
+          "여러 서비스에 걸친 작업을 한 번에 커밋할 수 없으므로 단계별 로컬 커밋 수행",
+          "중간 실패 시 이미 완료된 단계는 보상 트랜잭션(compensation)으로 롤백 효과 제공",
+          "오케스트레이션 방식: 중앙 Saga coordinator가 전체 흐름 제어",
+          "코레오그래피 방식: 이벤트 기반으로 각 서비스가 다음 단계를 자율 수행",
+          "면접 포인트: 2PC 대비 장단점(가용성↑, 복잡도↑, 즉시 일관성↓)을 설명할 수 있어야 함",
+          "타임아웃/중복 메시지/순서 역전 등을 고려한 상태 머신 설계가 중요",
+          "사용처: 주문-결제-재고-배송처럼 다중 서비스 업무 플로우",
+        ],
+        csharp:
+          "enum SagaState { Started, InventoryReserved, PaymentApproved, Completed, Compensating, Failed }\n\n// 오케스트레이터 의사코드\n// 1) ReserveInventory\n// 2) AuthorizePayment\n// 3) CreateShipment\n// 실패 시 역순 보상:\n// - CancelPayment\n// - ReleaseInventory",
+      },
     ],
   },
 ];
