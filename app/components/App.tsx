@@ -4,14 +4,31 @@ import { useState } from "react";
 import Dictionary from "./Dictionary";
 import Interview from "./Interview";
 import Patterns from "./Patterns";
+import DataStructures from "./DataStructures";
+import Algorithms from "./Algorithms";
 
-type Tab = "reference" | "interview" | "patterns";
+type Tab =
+  | "reference"
+  | "datastructures"
+  | "algorithms"
+  | "interview"
+  | "patterns";
 
 const TABS: { id: Tab; label: string; activeClass: string }[] = [
   {
     id: "reference",
     label: "레퍼런스",
     activeClass: "bg-yellow-400/20 text-yellow-300 border-yellow-500/40",
+  },
+  {
+    id: "datastructures",
+    label: "자료구조",
+    activeClass: "bg-cyan-400/20 text-cyan-300 border-cyan-500/40",
+  },
+  {
+    id: "algorithms",
+    label: "알고리즘",
+    activeClass: "bg-lime-400/20 text-lime-300 border-lime-500/40",
   },
   {
     id: "patterns",
@@ -86,7 +103,9 @@ export default function App() {
 
       {/* 탭 콘텐츠 */}
       {tab === "reference" && <Dictionary query={query} />}
-      {tab === "patterns"  && <Patterns  query={query} />}
+      {tab === "datastructures" && <DataStructures query={query} />}
+      {tab === "algorithms" && <Algorithms query={query} />}
+      {tab === "patterns" && <Patterns query={query} />}
       {tab === "interview" && <Interview query={query} />}
     </>
   );
