@@ -42,7 +42,7 @@ function InterviewCard({ item, color, query }: { item: InterviewItem; color: Int
         </span>
         <div className="flex-1 min-w-0">
           <span className={termClass}>{highlight(item.term, query)}</span>
-          <span className="text-zinc-400 text-[13px] ml-2 leading-snug">
+          <span className="text-zinc-400 text-[13px] ml-2 leading-[1.6]">
             — {highlight(item.oneliner, query)}
           </span>
         </div>
@@ -53,7 +53,7 @@ function InterviewCard({ item, color, query }: { item: InterviewItem; color: Int
           {item.detail.map((d, i) => (
             <li key={i} className="flex gap-1.5 items-baseline">
               <span className="text-zinc-600 text-[12px] shrink-0">•</span>
-              <span className="text-zinc-200 text-[13px] leading-snug font-mono">
+              <span className="text-zinc-200 text-[13px] leading-[1.6] font-mono">
                 {highlight(d, query)}
               </span>
             </li>
@@ -123,7 +123,7 @@ export default function Interview({ query }: { query: string }) {
   }
 
   return (
-    <div className="columns-[480px] gap-3">
+    <div className="grid grid-cols-1 lg:grid-cols-2 min-[1700px]:grid-cols-3 gap-6">
       {filtered.map((sec) => (
         <InterviewSectionBlock key={sec.id} sec={sec} query={query} />
       ))}

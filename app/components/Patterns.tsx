@@ -52,7 +52,7 @@ function PatternCard({ item, color, query }: { item: PatternItem; color: Pattern
               {item.category}
             </span>
           </div>
-          <span className="text-zinc-400 text-[13px] leading-snug block mt-[1px]">
+          <span className="text-zinc-400 text-[13px] leading-[1.6] block mt-[1px]">
             {highlight(item.oneliner, query)}
           </span>
         </div>
@@ -64,7 +64,7 @@ function PatternCard({ item, color, query }: { item: PatternItem; color: Pattern
             {item.detail.map((d, i) => (
               <li key={i} className="flex gap-1.5 items-baseline">
                 <span className="text-zinc-600 text-[12px] shrink-0">•</span>
-                <span className="text-zinc-200 text-[13px] leading-snug font-mono">
+                <span className="text-zinc-200 text-[13px] leading-[1.6] font-mono">
                   {highlight(d, query)}
                 </span>
               </li>
@@ -145,7 +145,7 @@ export default function Patterns({ query }: { query: string }) {
   }
 
   return (
-    <div className="columns-[480px] gap-3">
+    <div className="grid grid-cols-1 lg:grid-cols-2 min-[1700px]:grid-cols-3 gap-6">
       {filtered.map((sec) => (
         <PatternSectionBlock key={sec.id} sec={sec} query={query} />
       ))}
