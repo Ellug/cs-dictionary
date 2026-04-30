@@ -75,6 +75,20 @@ export const interviewSections: InterviewSection[] = [
         ],
       },
       {
+        term: "강한 참조 vs 약한 참조 (WeakReference)",
+        oneliner: "강한 참조는 객체 생존 보장, 약한 참조는 GC 수거를 막지 않음",
+        detail: [
+          "강한 참조(strong reference): 일반 참조. 참조가 살아있는 동안 객체는 수거되지 않음",
+          "약한 참조(WeakReference): GC 루트 체인에 영향 없음. 메모리 압박 시 언제든 수거 가능",
+          "캐시 시나리오: 없어도 다시 만들 수 있는 값은 WeakReference로 보관해 메모리 피크 완화",
+          "TryGetTarget(out T target) 패턴으로 객체 생존 여부를 매번 확인해야 안전",
+          "이벤트 구독 누수 방지: WPF 등의 WeakEvent 패턴으로 publisher가 subscriber 생존을 붙잡지 않게 설계",
+          "면접 포인트: '약한 참조는 메모리 절약 기술이지 수명 제어 기술이 아님'을 명확히 설명",
+          "GC 루트(스택/정적 필드/레지스터)에서 도달 가능하면 수거 불가, 그 외 객체는 세대별 회수 대상",
+          "흔한 실수: WeakReference에서 꺼낸 객체를 null 체크 없이 사용해 간헐적 NRE 발생",
+        ],
+      },
+      {
         term: "struct vs class",
         oneliner: "struct는 값 타입(스택), class는 참조 타입(힙). 작고 불변이면 struct",
         detail: [
@@ -500,6 +514,48 @@ export const interviewSections: InterviewSection[] = [
           "Monitor.TryEnter(obj, timeout)으로 타임아웃 설정",
         ],
       },
+      {
+        term: "Mutex / Semaphore / Monitor 심화",
+        oneliner: "락 도구는 목적이 다름. 배타 접근인지, 동시 수 제한인지 먼저 구분",
+        detail: [
+          "Monitor(lock): 프로세스 내부 임계구역 보호에 가장 일반적. C# lock 키워드가 Monitor 래핑",
+          "Mutex: OS 커널 객체 기반, 프로세스 간 동기화 가능. 상대적으로 무겁지만 cross-process 가능",
+          "Semaphore/SemaphoreSlim: 동시에 N개까지 진입 허용. 커넥션 풀, 작업 슬롯 제한에 적합",
+          "SemaphoreSlim은 사용자 모드 경량 구현 + async/await 친화적이라 서버 코드에서 선호",
+          "면접 포인트: '배타 1개'면 lock/Monitor, '동시성 제한'이면 Semaphore, '프로세스 간'이면 Mutex",
+          "락 보유 시간 최소화가 핵심. I/O를 락 안에서 수행하면 스루풋 급감",
+          "재진입 필요 여부, 타임아웃/취소 필요 여부(CancellationToken)까지 고려해 도구 선택",
+          "흔한 실수: public 객체를 lock 대상으로 사용해 외부 코드와 우발적 교착 유발",
+        ],
+      },
+      {
+        term: "거짓 공유 (False Sharing)",
+        oneliner: "서로 다른 변수여도 같은 캐시 라인에 있으면 멀티코어에서 성능이 급락",
+        detail: [
+          "CPU 캐시 라인(보통 64B) 단위로 일관성 프로토콜(MESI)이 동작해 불필요한 invalidation 발생",
+          "스레드 A/B가 각자 다른 카운터를 수정해도 같은 캐시 라인이면 캐시 핑퐁으로 느려짐",
+          "증상: 락이 없는데도 코어 수 늘릴수록 throughput이 오히려 감소",
+          "해결: 패딩 추가, 스레드별 로컬 누적 후 병합, 자료구조 분리(StructLayout/필드 간격 조정)",
+          "면접 포인트: race condition과의 차이 설명(정합성 문제 vs 성능 문제)",
+          "게임/서버 루프에서 per-thread stats, counters, job queue 메타데이터에서 자주 발생",
+          "벤치마크 시 Debug 모드/작은 데이터셋에서는 재현이 어려워 Release + 충분한 반복 필요",
+          "C#에서도 [StructLayout(LayoutKind.Explicit)] 또는 배열 stride 조정으로 완화 가능",
+        ],
+      },
+      {
+        term: "메모리 모델: volatile / Interlocked / lock",
+        oneliner: "가시성, 원자성, 순서 보장은 각각 다름. 상황별로 도구를 분리해서 써야 함",
+        detail: [
+          "volatile: 최신 값 가시성(메모리 배리어) 제공. 복합 연산(++, +=)의 원자성은 보장하지 않음",
+          "Interlocked: 단일 변수 원자 연산(Increment, CompareExchange) 제공. lock-free 카운터에 적합",
+          "lock(Monitor): 임계구역 전체의 상호 배제 + 진입/탈출 배리어 제공",
+          "면접 포인트: volatile만으로 스레드 안전하다고 보면 오답. 원자성과 불변식 보호는 별개",
+          "Double-checked locking은 volatile/메모리 배리어 이해 없이 구현하면 초기화 경쟁 가능",
+          "CAS(Compare-And-Swap) 기반 구조는 빠를 수 있지만 스핀과 ABA 문제를 고려해야 함",
+          "읽기 대부분/쓰기 드문 케이스는 ReaderWriterLockSlim도 선택지",
+          "흔한 실수: bool 플래그 하나를 volatile로 두고 복수 필드 상태를 함께 동기화하려고 시도",
+        ],
+      },
     ],
   },
   // ── 네트워크/웹 ──────────────────────────────────────────
@@ -508,6 +564,20 @@ export const interviewSections: InterviewSection[] = [
     title: "네트워크 / 웹 기초",
     color: "white",
     items: [
+      {
+        term: "OSI 7계층 + TCP/IP 매핑",
+        oneliner: "면접 단골: 계층별 역할, 대표 프로토콜, 장애 지점 설명 가능해야 함",
+        detail: [
+          "L7 응용: HTTP, gRPC, DNS / L6 표현: 인코딩, TLS / L5 세션: 세션 유지",
+          "L4 전송: TCP/UDP, 포트, 재전송 / L3 네트워크: IP, 라우팅 / L2 데이터링크: MAC, 스위치 / L1 물리",
+          "실무에서는 TCP/IP 4계층(응용-전송-인터넷-네트워크 액세스)으로 단순화해 보는 경우가 많음",
+          "면접 포인트: 'TLS는 전통 OSI에서 표현/세션 경계, 실무에선 L4~L7 사이로 취급' 정도의 유연한 설명",
+          "문제 분류 예시: TCP 재전송 지연은 L4, 라우팅 불가/TTL은 L3, DNS 실패는 L7",
+          "캡슐화 흐름: 앱 데이터 → TCP/UDP 헤더 → IP 헤더 → 이더넷 프레임",
+          "게임 클라 관점: 실시간 입력은 UDP 성향, 인증/결제는 TCP/HTTPS 성향 등 트래픽 성격 분리",
+          "흔한 실수: HTTP/HTTPS를 전송계층으로 답하거나 DNS를 L3로 잘못 분류",
+        ],
+      },
       {
         term: "HTTP vs HTTPS",
         oneliner: "HTTPS는 HTTP + TLS 암호화. 포트 80 vs 443",
@@ -535,6 +605,8 @@ export const interviewSections: InterviewSection[] = [
           "TCP: 3-way 핸드셰이크, 순서 보장, 재전송, 흐름/혼잡 제어",
           "UDP: 핸드셰이크 없음. 순서/전달 보장 없음. 오버헤드 낮음",
           "TCP: HTTP, 파일 전송, 이메일 / UDP: DNS, 스트리밍, 게임",
+          "Head-of-Line Blocking: TCP는 앞 패킷 지연이 뒤 데이터까지 막음. 실시간 게임에 불리할 수 있음",
+          "UDP 기반에서도 신뢰가 필요한 데이터는 앱 레벨 ACK/시퀀스 번호로 선택적 재전송 설계",
         ],
       },
       {
