@@ -75,6 +75,29 @@ export const interviewSections: InterviewSection[] = [
         ],
       },
       {
+        term: "Unity GC vs .NET GC 차이",
+        oneliner: "둘 다 C# 객체를 수거하지만, Unity는 프레임 안정성 관점에서 GC 튜닝 포인트가 다름",
+        detail: [
+          ".NET(Core/CLR) 서버 앱은 세대별 GC와 처리량 최적화가 강점, Unity는 프레임 타임 스파이크 억제가 더 중요",
+          "Unity(특히 Mono/IL2CPP 런타임)에서는 짧은 프레임마다 작은 할당이 누적되면 렌더 루프에서 hitch로 체감됨",
+          "실무에서는 '할당 자체를 줄이는 설계'(Object Pool, NativeArray, 재사용 버퍼)가 GC 옵션 변경보다 우선순위가 높음",
+          "Unity Incremental GC는 긴 멈춤을 쪼개는 대신 프레임마다 소량의 GC 작업을 수행하는 트레이드오프가 있음",
+          "면접 포인트: 백엔드의 평균 처리량 최적화와 달리 게임 클라에서는 P99 프레임 타임(최악 지연) 관리가 핵심",
+        ],
+      },
+      {
+        term: "GC 생명주기 (할당→마킹→수집→정리)",
+        oneliner: "객체는 생성 후 루트 도달성 분석을 거쳐 생존/수거가 결정됨",
+        detail: [
+          "1) 할당: new로 힙에 객체 생성 (게임에서는 per-frame new가 누적되기 쉬움)",
+          "2) 루트 스캔: 스택/정적 필드/레지스터 등 GC Root에서 도달 가능한 객체 마킹",
+          "3) 수집: 도달 불가(unreachable) 객체를 회수, 런타임 정책에 따라 세대 승격/정리 수행",
+          "4) 후처리: Finalizer 큐 처리, 필요 시 메모리 압축/단편화 완화",
+          "객체가 '오래 살아남을수록' 장수 영역으로 이동해 Full GC 비용에 영향을 주므로 장수 객체 수를 통제해야 함",
+          "면접 포인트: 단순히 GC.Collect 호출이 아니라 '할당 패턴 설계'가 근본 해법임을 설명",
+        ],
+      },
+      {
         term: "강한 참조 vs 약한 참조 (WeakReference)",
         oneliner: "강한 참조는 객체 생존 보장, 약한 참조는 GC 수거를 막지 않음",
         detail: [
@@ -180,6 +203,8 @@ export const interviewSections: InterviewSection[] = [
           "하나의 클래스가 너무 많은 역할 → 변경 시 영향 범위 커짐",
           "UserService가 DB저장 + 이메일 전송 + 로그 다 하면 SRP 위반",
           "역할마다 클래스 분리 → 테스트, 유지보수 쉬워짐",
+          "실무 예시(게임): InventoryService에서 '아이템 규칙 계산'과 'UI 갱신 이벤트 발행'을 분리해 서버/클라 동시 변경 리스크를 줄임",
+          "실무 예시(툴): 에셋 임포트 파이프라인에서 파싱/검증/저장 단계를 클래스로 분리하면 포맷 변경 시 수정 범위가 작아짐",
         ],
       },
       {
@@ -189,6 +214,8 @@ export const interviewSections: InterviewSection[] = [
           "기존 코드 수정 없이 새 기능 추가 가능하게 설계",
           "if-else / switch로 타입 분기 → OCP 위반 신호",
           "전략 패턴, 다형성으로 해결: 새 클래스 추가만으로 확장",
+          "실무 예시(전투): DamageCalculator 내부 switch(무기 타입) 대신 IDamagePolicy 구현체를 등록해 신규 무기 추가 시 기존 코드 무수정",
+          "실무 예시(플랫폼): 결제 수단 추가를 IPaymentGateway 구현체 추가로 처리하면 QA 영향 범위를 기능 단위로 격리 가능",
         ],
       },
       {
@@ -198,6 +225,8 @@ export const interviewSections: InterviewSection[] = [
           "Rectangle → Square 상속에서 SetWidth가 높이도 바꾸면 LSP 위반",
           "오버라이드 시 사전조건 강화, 사후조건 약화 금지",
           "위반 시 다운캐스팅 + is/as 남발하게 됨",
+          "실무 예시: IAssetLoader를 구현한 RemoteLoader가 timeout 시 null 반환, LocalLoader는 예외를 던지면 호출부 계약이 깨져 LSP 위반",
+          "실무 예시: IPathFinder 구현체(A*, NavMesh)가 '항상 경로 배열 반환, 실패 시 빈 배열' 규약을 지키면 교체가 안전",
         ],
       },
       {
@@ -207,6 +236,8 @@ export const interviewSections: InterviewSection[] = [
           "거대한 인터페이스 하나보다 작은 인터페이스 여러 개가 나음",
           "IWorker에 Work()와 Eat()이 있으면 로봇 클래스가 Eat() 구현 강제됨 → 위반",
           "IWorkable, IFeedable로 분리",
+          "실무 예시: ICharacterController에 Move/Jump/Shoot/Craft/Trade를 다 넣지 말고 IMovement, ICombat, ICrafting으로 분리",
+          "실무 예시: 에디터 툴 API를 읽기 전용(IAssetQuery)과 변경(IAssetCommand)으로 분리하면 권한/테스트 경계가 명확해짐",
         ],
       },
       {
@@ -217,6 +248,8 @@ export const interviewSections: InterviewSection[] = [
           "IRepository 인터페이스에 의존 → 구현체를 갈아끼울 수 있음",
           "DI(의존성 주입) 컨테이너로 구현체 주입: 생성자 주입이 가장 권장",
           "테스트 시 Mock 객체로 쉽게 대체 가능",
+          "실무 예시(클라): MatchmakingService가 HttpClient 직접 호출 대신 IMatchApi에 의존하면 REST→gRPC 전환 시 서비스 코드 변경이 최소화",
+          "실무 예시(엔진 의존성): MonoBehaviour 내부에서 직접 PlayerPrefs를 부르기보다 ISettingsStore를 주입하면 플랫폼별 저장소 교체/테스트가 쉬워짐",
         ],
       },
     ],
@@ -252,6 +285,40 @@ export const interviewSections: InterviewSection[] = [
           "ISort 인터페이스 → BubbleSort, QuickSort 구현체",
           "컨텍스트 클래스가 전략 인터페이스 참조 → 실행 시점에 주입",
           "if-else 분기 대신 전략 패턴 → OCP 달성",
+        ],
+      },
+      {
+        term: "상태 패턴 (State Pattern)",
+        oneliner: "상태별 행위를 클래스로 분리해 분기문 폭발을 막는 패턴",
+        detail: [
+          "Context가 현재 상태 객체(IState)를 들고 있으며, 요청을 상태 객체에 위임",
+          "상태 전이(Idle→Move→Attack)를 상태 클래스 내부 또는 전이 매니저로 관리",
+          "if/switch 기반 상태 분기보다 변경 범위가 작아지고 테스트가 쉬워짐",
+          "면접 포인트: 전략 패턴과의 차이 설명(전략은 알고리즘 교체, 상태 패턴은 내부 상태 전이에 따른 행위 변화)",
+          "게임 실무 예시: 플레이어/보스 AI 상태별 입력 처리와 애니메이션 트리거를 분리해 버그 격리",
+        ],
+      },
+      {
+        term: "FSM (Finite State Machine)",
+        oneliner: "상태 집합 + 이벤트 + 전이 규칙으로 시스템 동작을 모델링",
+        detail: [
+          "구성요소: State, Event, Transition, Guard(전이 조건), Action(전이 시 실행)",
+          "코드로는 enum+테이블(딕셔너리) 또는 상태 객체(OOP) 방식으로 구현 가능",
+          "복잡한 흐름에서는 계층형 FSM(HFSM)으로 상태 폭발을 완화",
+          "면접 포인트: 상태 패턴(구현 방식)과 FSM(모델링 개념)을 구분해 설명하면 강함",
+          "실무 예시: 로그인 플로우, 네트워크 세션 상태, 퀘스트 진행 상태 머신",
+        ],
+      },
+      {
+        term: "아토믹 디자인 (Atomic Design)",
+        oneliner: "UI를 Atom→Molecule→Organism→Template→Page로 계층화하는 설계 방법",
+        detail: [
+          "Atom: 버튼/입력/아이콘 같은 최소 UI 요소",
+          "Molecule: 검색바(입력+버튼)처럼 작은 조합 단위",
+          "Organism: 헤더/카드 리스트처럼 화면 영역 단위 컴포넌트",
+          "Template/Page를 분리하면 '레이아웃'과 '실제 데이터가 들어간 화면' 책임이 분명해짐",
+          "면접 포인트: 디자인 시스템 재사용성과 협업(디자이너-개발자) 효율을 높이는 관점으로 설명",
+          "실무 예시: 게임 런처/상점 UI를 아토믹 단위로 쪼개면 이벤트 변경 시 파급 범위가 작아짐",
         ],
       },
       {
@@ -554,6 +621,122 @@ export const interviewSections: InterviewSection[] = [
           "CAS(Compare-And-Swap) 기반 구조는 빠를 수 있지만 스핀과 ABA 문제를 고려해야 함",
           "읽기 대부분/쓰기 드문 케이스는 ReaderWriterLockSlim도 선택지",
           "흔한 실수: bool 플래그 하나를 volatile로 두고 복수 필드 상태를 함께 동기화하려고 시도",
+        ],
+      },
+    ],
+  },
+  // ── Unity 클라이언트 성능 ───────────────────────────────
+  {
+    id: "unity-client-performance",
+    title: "Unity 클라이언트 성능 / 렌더링",
+    color: "red",
+    items: [
+      {
+        term: "데이터 주도 설계 (DOD) / ECS",
+        oneliner: "객체 중심이 아니라 데이터 배치와 접근 패턴 중심으로 성능을 설계",
+        detail: [
+          "OOP는 캡슐화에 강하지만 메모리가 분산되기 쉬워 캐시 미스가 늘 수 있음",
+          "DOD는 '같이 접근되는 데이터'를 연속 메모리에 배치해 CPU 캐시 적중률을 높임",
+          "Unity ECS는 컴포넌트를 청크 단위로 저장해 대량 엔티티 순회 성능을 높이는 대표 사례",
+          "면접 포인트: '왜 class보다 struct+NativeArray가 빠른가'를 캐시 라인/분기 예측 관점에서 설명",
+          "실무 예시: 탄환 10만 개 업데이트를 MonoBehaviour 분산 객체 대신 SoA(Structure of Arrays)로 관리해 프레임 타임 안정화",
+        ],
+      },
+      {
+        term: "Unity 미디어/렌더 파이프라인",
+        oneliner: "에셋 로드부터 GPU 제출까지 단계별 병목을 나눠서 보는 것이 핵심",
+        detail: [
+          "대략 흐름: Asset Import/Load → CPU 준비(애니메이션/스킨/컬링) → RenderQueue 정렬 → Draw Submission → GPU Raster",
+          "텍스처/메시/애니메이션/오디오 각각 디코드 비용과 메모리 대역폭 병목 지점이 다름",
+          "면접에서 'CPU bound인지 GPU bound인지' 먼저 가설을 세우고 Profiler/Frame Debugger로 검증하는 접근을 설명하면 좋음",
+          "스트리밍 에셋(영상/고해상 텍스처)은 I/O 지연과 메모리 피크를 함께 관리해야 hitch를 줄일 수 있음",
+          "실무 예시: 컷신 진입 전 프리로드 + 비동기 Addressables 로드로 첫 프레임 드랍 완화",
+        ],
+      },
+      {
+        term: "Draw Call",
+        oneliner: "CPU가 GPU에 렌더 명령을 제출하는 단위. 많아질수록 CPU 드라이버 오버헤드가 증가",
+        detail: [
+          "같은 머티리얼/셰이더라도 상태(state) 변경이 발생하면 draw call이 분리될 수 있음",
+          "UI, 파티클, 스키닝 메시, 투명 오브젝트 정렬은 draw call 증가의 흔한 원인",
+          "최적화 방향: 머티리얼 통합, 텍스처 아틀라스, 정적/동적 배칭, GPU instancing",
+          "면접 포인트: draw call 수치만 보지 말고 SetPass Call과 함께 봐야 실제 상태 변경 비용을 판단 가능",
+          "실무 예시: 동일 프리팹이라도 MaterialPropertyBlock 남용 시 인스턴싱이 깨져 draw call이 급증할 수 있음",
+        ],
+      },
+      {
+        term: "SRP Batcher",
+        oneliner: "SRP(URP/HDRP)에서 머티리얼 상수 버퍼를 정규화해 CPU 드로우 제출 비용을 낮추는 최적화",
+        detail: [
+          "조건: SRP 호환 셰이더 + CBUFFER 레이아웃 규칙 준수 + 파이프라인 설정에서 SRP Batcher 활성화",
+          "머티리얼 변경이 있어도 상수 버퍼 업데이트 경로를 단순화해 기존 방식 대비 CPU 비용을 줄임",
+          "GPU Instancing과 목적이 다름: Instancing은 같은 메시/머티리얼 다수 객체를 한 번에, SRP Batcher는 제출 경로 비용 최적화",
+          "면접 포인트: 'SRP Batcher가 켜져도 모든 오브젝트가 자동 배칭되는 건 아님'을 명확히 설명",
+          "실무 예시: 커스텀 셰이더를 SRP Batcher 규칙에 맞게 수정했더니 메인 스레드 RenderLoop 비용이 감소",
+        ],
+      },
+      {
+        term: "SetPass Call vs Batches",
+        oneliner: "Batches보다 SetPass Call이 CPU 비용에 더 치명적인 경우가 많음",
+        detail: [
+          "SetPass Call은 셰이더/렌더 상태 전환 비용이 포함되어 상대적으로 비쌈",
+          "Batches가 다소 높아도 SetPass가 낮으면 프레임 타임이 안정적인 케이스가 있음",
+          "최적화 우선순위: 셰이더/머티리얼 종류 수를 줄여 SetPass를 먼저 낮추고, 이후 배치 수를 다듬음",
+          "면접 포인트: Stats 창 숫자를 맹신하지 말고 RenderDoc/Profiler로 실제 병목(메인 스레드 vs GPU)을 교차 검증",
+          "실무 예시: UI 머티리얼 통합으로 Batches 소폭 감소, SetPass 대폭 감소 → 체감 성능 개선",
+        ],
+      },
+    ],
+  },
+  // ── 게임 클라 심화 ───────────────────────────────────────
+  {
+    id: "game-client-deep",
+    title: "게임 클라이언트 기술면접 심화",
+    color: "red",
+    items: [
+      {
+        term: "Client Prediction / Reconciliation / Interpolation",
+        oneliner: "입력 지연을 숨기고 서버 권위 상태와 클라 표시를 동기화하는 핵심 기법",
+        detail: [
+          "Prediction: 입력 직후 클라에서 먼저 시뮬레이션해 즉각 반응성을 확보",
+          "Reconciliation: 서버 스냅샷 도착 시 과거 입력 버퍼를 재적용해 오차를 보정",
+          "Interpolation: 원격 플레이어는 스냅샷 사이를 보간해 부드럽게 렌더링",
+          "면접 포인트: '내 캐릭터는 prediction, 타 캐릭터는 interpolation'으로 역할을 분리해 설명",
+          "실무 이슈: 큰 보정(warp) 발생 시 스냅/스무딩 정책을 분리해 시각적 튐 최소화",
+          "패킷 유실/순서 역전 처리를 위해 tick 번호와 입력 시퀀스 번호 관리가 필수",
+        ],
+      },
+      {
+        term: "Lockstep vs Snapshot 방식",
+        oneliner: "결정론 동기화(lockstep)와 상태 동기화(snapshot)는 장단점이 뚜렷",
+        detail: [
+          "Lockstep: 모든 클라가 동일 입력으로 동일 시뮬레이션을 재현. 대역폭 효율이 좋지만 결정론 유지가 어렵고 지연에 민감",
+          "Snapshot: 서버가 상태를 주기적으로 전송. 구현 단순하고 치트 대응에 유리하지만 대역폭 사용량 증가",
+          "RTS/턴제는 lockstep, 액션/FPS는 snapshot+prediction 조합이 일반적",
+          "면접 포인트: 장르 특성(반응성/대역폭/치트 내성)에 따라 동기화 방식을 선택하는 근거 제시",
+          "결정론 요구 시 float 연산 오차, 플랫폼 차이, 물리 엔진 비결정성 대응 전략이 필요",
+        ],
+      },
+      {
+        term: "프레임 타임 분석 (CPU Bound vs GPU Bound)",
+        oneliner: "최적화는 병목 위치를 먼저 고정한 뒤 진행해야 효과가 큼",
+        detail: [
+          "CPU bound: 메인 스레드/렌더 스레드 시간이 길어 GPU가 대기",
+          "GPU bound: GPU frame 시간이 길어 CPU 최적화만으로는 개선이 제한",
+          "Unity Profiler + Frame Debugger + RenderDoc을 교차 사용해 원인을 분리",
+          "면접 포인트: draw call 숫자만 보는 접근을 지양하고, 실제 frame time 분해를 강조",
+          "실무 예시: CPU bound에서는 스크립트/배치 최적화, GPU bound에서는 쉐이더/오버드로우/해상도 스케일링 우선",
+        ],
+      },
+      {
+        term: "Addressables / 비동기 로딩 설계",
+        oneliner: "로딩 끊김과 메모리 피크를 줄이려면 자산 생명주기와 참조 정책을 함께 설계해야 함",
+        detail: [
+          "핵심은 '언제 로드하고 언제 해제할지'를 씬 전환/게임플레이 단계에 맞춰 명시하는 것",
+          "참조 카운트 기반 해제를 이해하지 못하면 메모리 누수 또는 premature unload가 발생",
+          "프리로드/백그라운드 로드/지연 로드를 구분해 UX와 메모리 사용량을 균형화",
+          "면접 포인트: 로딩 시간 최적화뿐 아니라 런타임 메모리 안정성까지 함께 설명",
+          "실무 예시: 전투 씬 진입 직전 핵심 프리팹 선로딩, 전투 종료 후 카테고리 단위 release",
         ],
       },
     ],
@@ -970,6 +1153,19 @@ export const interviewSections: InterviewSection[] = [
           "interface IEnumerable<out T>: T를 반환에만 사용 → 공변",
           "interface IComparable<in T>: T를 파라미터에만 사용 → 반변",
           "class/struct는 공변/반변 불가. 인터페이스/델리게이트만 가능",
+        ],
+      },
+      {
+        term: "제네릭 심화 (제약 / 성능 / 런타임)",
+        oneliner: "제네릭은 타입 안정성과 성능(박싱 제거)을 동시에 잡는 C# 핵심 도구",
+        detail: [
+          "where 제약(class/struct/new()/인터페이스/기반클래스)으로 API 계약을 컴파일 타임에 강제",
+          "값 타입 제네릭(List<int>)은 박싱 없이 동작해 object 기반 컬렉션보다 GC 압박이 낮음",
+          "JIT는 닫힌 제네릭 타입별로 코드를 생성하며, 참조형은 코드 공유·값형은 특화 코드 생성 경향",
+          "unmanaged, notnull 제약은 interop/고성능 코드에서 안전성 확보에 유용",
+          "면접 포인트: 제네릭 메서드와 비제네릭 오버로드의 선택 기준(타입 안정성/가독성/런타임 비용)",
+          "실무 예시: 이벤트 버스를 Publish<TEvent>()로 설계하면 캐스팅 분기 없이 이벤트 확장이 가능",
+          "실무 예시: DI에서 Open Generic(IRepository<T>) 등록으로 엔티티별 저장소 구현 중복을 줄임",
         ],
       },
       {

@@ -6,11 +6,13 @@ import Interview from "./Interview";
 import Patterns from "./Patterns";
 import DataStructures from "./DataStructures";
 import Algorithms from "./Algorithms";
+import InterviewQuestions from "./InterviewQuestions";
 
 type Tab =
   | "reference"
   | "datastructures"
   | "algorithms"
+  | "interview-questions"
   | "interview"
   | "patterns";
 
@@ -34,6 +36,11 @@ const TABS: { id: Tab; label: string; activeClass: string }[] = [
     id: "patterns",
     label: "디자인 패턴",
     activeClass: "bg-blue-400/20 text-blue-300 border-blue-500/40",
+  },
+  {
+    id: "interview-questions",
+    label: "면접 단골질문",
+    activeClass: "bg-emerald-400/20 text-emerald-300 border-emerald-500/40",
   },
   {
     id: "interview",
@@ -106,6 +113,7 @@ export default function App() {
       {tab === "datastructures" && <DataStructures query={query} />}
       {tab === "algorithms" && <Algorithms query={query} />}
       {tab === "patterns" && <Patterns query={query} />}
+      {tab === "interview-questions" && <InterviewQuestions query={query} />}
       {tab === "interview" && <Interview query={query} />}
     </>
   );

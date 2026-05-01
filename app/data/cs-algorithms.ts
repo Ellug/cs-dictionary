@@ -551,6 +551,86 @@ export const algorithmSections: AlgoSection[] = [
         csharp:
           "const double fixedDt = 1.0 / 60.0;\nconst int maxSteps = 5;\n\ndouble accumulator = 0.0;\ndouble lastTime = GetNow();\n\nwhile (running) {\n    double now = GetNow();\n    accumulator += now - lastTime;\n    lastTime = now;\n\n    int steps = 0;\n    while (accumulator >= fixedDt && steps < maxSteps) {\n        prevState = currState;\n        currState = Simulate(currState, fixedDt);\n        accumulator -= fixedDt;\n        steps++;\n    }\n\n    double alpha = accumulator / fixedDt;\n    var renderState = Lerp(prevState, currState, alpha);\n    Render(renderState);\n}",
       },
+      {
+        term: "FSM 전이 테이블 (게임 상태 제어)",
+        oneliner: "상태+입력으로 다음 상태를 결정하는 규칙 기반 알고리즘. AI/캐릭터 제어의 기본",
+        complexity: "전이 조회 O(1) (테이블/딕셔너리 기준)",
+        detail: [
+          "상태(State)와 이벤트(Event)를 키로 다음 상태를 찾는 방식으로 분기 로직을 데이터화",
+          "if/switch 체인을 줄여 상태 추가 시 코드 충돌을 줄이고 디버깅 가시성을 높임",
+          "면접 포인트: 상태 패턴(OOP)과 FSM(전이 모델)은 상호 보완 관계라고 설명하면 좋음",
+          "전이 가드(조건식)와 액션(onExit/onEnter)을 분리하면 유지보수가 쉬워짐",
+          "게임 AI, UI 플로우, 네트워크 접속 상태(Connecting/Authenticating/InGame) 등에 폭넓게 사용",
+          "복잡도가 커지면 Hierarchical FSM(HFSM) 또는 Behavior Tree로 확장",
+          "코테/면접 실수: 상태 전이가 누락되어 dead state가 생기거나, 예상치 못한 self-loop가 남음",
+        ],
+        csharp:
+          "enum State { Idle, Chase, Attack }\nenum Event { SeeEnemy, InRange, LostEnemy }\n\nvar trans = new Dictionary<(State, Event), State> {\n    [(State.Idle, Event.SeeEnemy)] = State.Chase,\n    [(State.Chase, Event.InRange)] = State.Attack,\n    [(State.Attack, Event.LostEnemy)] = State.Idle,\n};\n\nState Next(State cur, Event ev) => trans.TryGetValue((cur, ev), out var nxt) ? nxt : cur;",
+      },
+      {
+        term: "K-Means 군집화",
+        oneliner: "데이터를 K개 중심점으로 반복 재할당해 군집을 찾는 대표 알고리즘",
+        complexity: "시간 O(n * k * iter) / 공간 O(n + k)",
+        detail: [
+          "1) 중심점 초기화 2) 각 점을 가장 가까운 중심에 할당 3) 중심 재계산을 수렴까지 반복",
+          "초기 중심 선택이 품질에 큰 영향. K-Means++를 쓰면 로컬 최적해 위험 완화",
+          "면접 포인트: 비지도 학습이며 군집 수 K를 사전에 정해야 한다는 한계를 설명",
+          "게임 활용: 플레이어 행동 세그먼트 분석, 맵 히트맵 구역 자동 분류, 밸런스 데이터 클러스터링",
+          "거리 함수는 보통 유클리드. 도메인에 따라 코사인 거리/정규화 전처리 필요",
+          "수렴 판정: 중심 이동량이 임계값 이하 또는 최대 반복 횟수 도달",
+          "코테 실수: 빈 클러스터 처리 누락(해당 중심을 재초기화해야 함)",
+        ],
+        csharp:
+          "for (int iter = 0; iter < maxIter; iter++) {\n    // assign\n    for (int i = 0; i < points.Length; i++)\n        label[i] = ArgMinCenter(points[i], centers);\n\n    // update\n    RecomputeCenters(points, label, centers);\n\n    if (Converged(prevCenters, centers, eps)) break;\n}",
+      },
+      {
+        term: "Boids 군집 행동 (Separation / Alignment / Cohesion)",
+        oneliner: "로컬 규칙 3개로 집단 이동을 만드는 군집 시뮬레이션 알고리즘",
+        complexity: "기본 O(n^2), 공간 분할 적용 시 근사 O(n)",
+        detail: [
+          "분리(Separation): 너무 가까운 이웃에서 멀어지기",
+          "정렬(Alignment): 이웃 평균 속도 방향으로 맞추기",
+          "응집(Cohesion): 이웃 중심 방향으로 모이기",
+          "면접 포인트: 단순 규칙이 복잡한 집단 행동을 만든다는 emergent behavior 설명",
+          "naive 구현은 모든 쌍 비교로 O(n^2). 그리드/쿼드트리로 이웃 탐색 최적화 필수",
+          "게임 활용: 군중/새 떼/물고기 떼/드론 스웜 움직임",
+          "가중치 튜닝이 핵심이며 separation이 약하면 겹침, cohesion이 강하면 과도한 뭉침 발생",
+        ],
+        csharp:
+          "Vector2 acc =\n    wSep * Separation(i, neighbors) +\n    wAli * Alignment(i, neighbors) +\n    wCoh * Cohesion(i, neighbors);\n\nvel[i] = Clamp(vel[i] + acc * dt, maxSpeed);\npos[i] += vel[i] * dt;",
+      },
+      {
+        term: "Perlin/FBM 노이즈 기반 절차적 지형 생성",
+        oneliner: "연속 노이즈를 합성해 자연스러운 높이맵/바이옴을 만드는 절차적 생성 핵심",
+        complexity: "시간 O(W*H*octaves) / 공간 O(W*H)",
+        detail: [
+          "Perlin/Simplex 노이즈는 인접 샘플이 부드럽게 연결되어 지형 생성에 적합",
+          "FBM(fractal brownian motion): 주파수/진폭을 옥타브로 합성해 디테일을 추가",
+          "면접 포인트: seed 기반 재현성(determinism) 덕분에 서버-클라 동기화/리플레이에 유리",
+          "높이값 외에 온도/습도 노이즈를 결합해 바이옴(사막/숲/설원) 분기 가능",
+          "게임 실무에서는 chunk 단위로 생성하고 비동기 스트리밍으로 끊김을 줄임",
+          "노이즈 샘플링 좌표 스케일이 너무 작으면 반복 패턴, 너무 크면 디테일 부족",
+          "코테/면접 실수: 랜덤값만 찍어 노이즈로 오해(연속성 없는 white noise는 지형 품질이 낮음)",
+        ],
+        csharp:
+          "for (int y = 0; y < H; y++)\nfor (int x = 0; x < W; x++) {\n    float amp = 1f, freq = 1f, h = 0f;\n    for (int o = 0; o < octaves; o++) {\n        h += amp * Perlin((x + seedX) * scale * freq, (y + seedY) * scale * freq);\n        amp *= persistence;\n        freq *= lacunarity;\n    }\n    height[y, x] = h;\n}",
+      },
+      {
+        term: "BSP + Cellular Automata 던전 생성",
+        oneliner: "공간 분할(BSP)로 방 구조를 잡고, 셀룰러 오토마타로 자연스러운 동굴 형태를 보정",
+        complexity: "BSP O(split 수), CA O(W*H*iter)",
+        detail: [
+          "BSP(Binary Space Partition): 맵을 재귀 분할해 방 후보 영역을 확보",
+          "각 리프에 방을 만들고 복도로 연결하면 플레이 가능한 토폴로지를 확보하기 쉬움",
+          "Cellular Automata는 벽/빈칸 이웃 규칙으로 동굴형 자연스러운 경계를 생성",
+          "면접 포인트: 생성 단계(구조 확보 → 디테일 노이즈 보정)를 분리한 하이브리드 설계 설명",
+          "실무에서는 시작/보스/상점 같은 필수 룸 제약을 추가해 디자인 의도를 반영",
+          "연결성 검증(도달 가능성 BFS) 후 불량 맵을 재생성하는 검수 루프가 필요",
+          "코테 실수: 분할 최소 크기 조건 누락으로 지나치게 좁은 방/막힌 복도 생성",
+        ],
+        csharp:
+          "// 1) BSP 분할로 leaf 생성\n// 2) leaf마다 room carve\n// 3) 인접 room 연결 corridor carve\n// 4) Cellular Automata 후처리 + 연결성 BFS 검증",
+      },
     ],
   },
 ];
