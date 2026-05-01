@@ -973,6 +973,45 @@ export const interviewSections: InterviewSection[] = [
         ],
       },
       {
+        term: "IEnumerable / IEnumerator / Iterator 차이",
+        oneliner: "IEnumerable은 '집합', IEnumerator는 '커서'. Iterator(yield)는 둘을 만드는 문법",
+        detail: [
+          "IEnumerable<T>: 반복 가능한 컬렉션(반복 시작점). 핵심은 GetEnumerator() 제공",
+          "IEnumerator<T>: 현재 위치(Current) + 다음으로 이동(MoveNext) + 종료/초기화 상태를 가진 커서",
+          "한 줄 요약: IEnumerable은 '책', IEnumerator는 '책갈피'라고 설명하면 면접에서 직관적",
+          "foreach는 IEnumerable에서 Enumerator를 꺼내 MoveNext/Current를 반복 호출해 순회",
+          "Iterator 메서드(yield return)는 컴파일러가 상태 머신 클래스를 생성해 IEnumerable/IEnumerator 구현을 자동 생성",
+          "IEnumerable은 보통 여러 번 순회 가능하지만, 일부 스트림/네트워크 시퀀스는 1회성일 수 있어 계약 확인 필요",
+          "면접 포인트: LINQ가 IEnumerable 기반 지연 평가라는 점(열거 시작 전까지 실행 안 됨)까지 연결하면 강함",
+        ],
+      },
+      {
+        term: "foreach의 in 내부 동작",
+        oneliner: "컴파일러가 GetEnumerator/MoveNext/Current + try/finally Dispose 패턴으로 변환",
+        detail: [
+          "개념적으로 `foreach (var x in col)`은 `var e = col.GetEnumerator(); while (e.MoveNext()) { var x = e.Current; ... }`로 변환됨",
+          "열거자가 IDisposable이면 컴파일러가 try/finally를 넣어 Dispose 호출을 보장",
+          "배열은 특수 최적화 경로가 있어 Enumerator 대신 인덱스 기반 for로 변환될 수 있음",
+          "패턴 기반 열거도 가능: 인터페이스 구현이 없어도 `GetEnumerator/MoveNext/Current` 시그니처가 맞으면 foreach 가능",
+          "struct Enumerator는 boxing 없이 빠르지만, 인터페이스 형으로 업캐스팅되면 boxing이 생길 수 있음",
+          "컬렉션 수정 감지: List<T> 등은 순회 중 구조 변경 시 InvalidOperationException(\"Collection was modified\") 발생",
+          "면접 포인트: '왜 foreach가 보통 for와 비슷한 성능인지', '언제 boxing/예외 비용이 생기는지'를 설명",
+        ],
+      },
+      {
+        term: "yield return 상태 머신",
+        oneliner: "yield는 지연 실행 코드를 컴파일러가 상태 머신으로 바꿔 메모리 효율적 순회를 제공",
+        detail: [
+          "yield 메서드는 호출 즉시 본문을 끝까지 실행하지 않고, 열거 시작 시점부터 단계적으로 실행",
+          "각 yield return 지점의 로컬 변수/프로그램 카운터를 상태로 저장했다가 다음 MoveNext에서 이어서 실행",
+          "장점: 큰 데이터를 한 번에 만들지 않아도 되어 메모리 사용량이 작음(스트리밍 처리에 유리)",
+          "주의: 같은 IEnumerable를 다시 순회하면 본문 로직이 다시 실행됨(부수효과 코드면 중복 실행 위험)",
+          "try/catch/finally, using과 함께 쓸 때 자원 해제 타이밍(열거 종료 시 Dispose) 이해가 중요",
+          "면접 포인트: 'yield는 문법 설탕이 아니라 컴파일 타임 상태 머신 생성'이라고 설명하면 정확함",
+          "IAsyncEnumerable<T> + await foreach는 같은 아이디어의 비동기 버전(네트워크/IO 스트림 처리에 활용)",
+        ],
+      },
+      {
         term: "Expression Tree",
         oneliner: "람다를 데이터(AST)로 표현. LINQ to SQL이 쿼리로 변환하는 데 씀",
         detail: [
