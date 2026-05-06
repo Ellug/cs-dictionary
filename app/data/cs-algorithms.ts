@@ -809,6 +809,23 @@ export const algorithmSections: AlgoSection[] = [
           "const int MIN_RUN = 32;\n\nvoid TimSort(int[] a) {\n    int n = a.Length;\n    // 1단계: run마다 삽입 정렬\n    for (int i = 0; i < n; i += MIN_RUN) {\n        int hi = Math.Min(i + MIN_RUN - 1, n - 1);\n        InsertionSortRange(a, i, hi);\n    }\n    // 2단계: run을 병합하며 크기를 2배씩 확장\n    int[] tmp = new int[n];\n    for (int size = MIN_RUN; size < n; size *= 2)\n        for (int lo = 0; lo < n; lo += 2 * size) {\n            int mid = Math.Min(lo + size - 1, n - 1);\n            int hi = Math.Min(lo + 2 * size - 1, n - 1);\n            if (mid < hi) Merge(a, lo, mid, hi, tmp);\n        }\n}\n\nvoid InsertionSortRange(int[] a, int lo, int hi) {\n    for (int i = lo + 1; i <= hi; i++) {\n        int key = a[i], j = i - 1;\n        while (j >= lo && a[j] > key) { a[j + 1] = a[j]; j--; }\n        a[j + 1] = key;\n    }\n}\n\nvoid Merge(int[] a, int lo, int mid, int hi, int[] tmp) {\n    for (int k = lo; k <= hi; k++) tmp[k] = a[k];\n    int i = lo, j = mid + 1;\n    for (int k = lo; k <= hi; k++) {\n        if      (i > mid)         a[k] = tmp[j++];\n        else if (j > hi)          a[k] = tmp[i++];\n        else if (tmp[j] < tmp[i]) a[k] = tmp[j++];\n        else                      a[k] = tmp[i++];\n    }\n}",
       },
       {
+        term: "인트로 정렬 (Intro Sort)",
+        oneliner: "퀵+힙+삽입 정렬 자동 전환 하이브리드. C# Array.Sort의 실제 구현체",
+        complexity: "최선·평균·최악 모두 O(n log n) / 공간 O(log n) / 불안정 정렬",
+        detail: [
+          "퀵 정렬로 시작 → 재귀 깊이 > 2×log₂(n)이면 힙 정렬로 전환 → 구간 ≤16이면 삽입 정렬",
+          "퀵의 평균 성능(캐시 친화) + 힙의 최악 보장 + 삽입의 소구간 최적화를 모두 가짐",
+          "C#의 Array.Sort(), List<T>.Sort()가 내부적으로 IntroSort 사용 → 직접 구현 불필요",
+          "불안정 정렬: 동일 키의 순서가 보장되지 않음. 안정 정렬이 필요하면 OrderBy(LINQ) 사용",
+          "장점: 실제 데이터에서 퀵 정렬만큼 빠르면서 최악 O(n²) 함정이 없음",
+          "단점: 불안정 정렬. Tim Sort(Python/Java)보다 부분 정렬된 데이터에서 약간 느릴 수 있음",
+          "사용 시점: C#에서 범용 정렬이 필요한 모든 상황 — Array.Sort 호출이 곧 IntroSort 사용",
+          "면접 포인트: 'Array.Sort가 왜 빠른가' 질문에 IntroSort 3단계 전환 구조로 답하면 고득점",
+        ],
+        csharp:
+          "// C# Array.Sort = IntroSort (내부 구현)\n// 직접 호출만 해도 IntroSort가 동작\nArray.Sort(arr);\nArray.Sort(arr, comparer);\nlist.Sort();\n\n// 안정 정렬이 필요한 경우 LINQ OrderBy 사용\nvar sorted = arr.OrderBy(x => x).ToArray();\n\n// IntroSort 직접 구현 (학습용)\nvoid IntroSort(int[] a, int lo, int hi, int depthLimit) {\n    int size = hi - lo + 1;\n\n    // 소구간: 삽입 정렬\n    if (size <= 16) { InsertionSortRange(a, lo, hi); return; }\n\n    // 깊이 초과: 힙 정렬로 전환\n    if (depthLimit == 0) { HeapSortRange(a, lo, hi); return; }\n\n    // 퀵 정렬 (Median-of-3 피벗)\n    int pivot = MedianOfThree(a, lo, lo + size / 2, hi);\n    int p = PartitionByPivot(a, lo, hi, pivot);\n    IntroSort(a, lo, p - 1, depthLimit - 1);\n    IntroSort(a, p + 1, hi, depthLimit - 1);\n}\n\nvoid IntroSortEntry(int[] a) {\n    if (a.Length <= 1) return;\n    int depthLimit = 2 * (int)Math.Log2(a.Length);\n    IntroSort(a, 0, a.Length - 1, depthLimit);\n}\n\nvoid HeapSortRange(int[] a, int lo, int hi) {\n    int n = hi - lo + 1;\n    for (int i = n / 2 - 1; i >= 0; i--) HeapifyRange(a, lo, n, i);\n    for (int i = n - 1; i > 0; i--) {\n        (a[lo], a[lo + i]) = (a[lo + i], a[lo]);\n        HeapifyRange(a, lo, i, 0);\n    }\n}\n\nvoid HeapifyRange(int[] a, int offset, int n, int root) {\n    while (true) {\n        int largest = root, l = 2 * root + 1, r = 2 * root + 2;\n        if (l < n && a[offset + l] > a[offset + largest]) largest = l;\n        if (r < n && a[offset + r] > a[offset + largest]) largest = r;\n        if (largest == root) break;\n        (a[offset + root], a[offset + largest]) = (a[offset + largest], a[offset + root]);\n        root = largest;\n    }\n}\n\nvoid InsertionSortRange(int[] a, int lo, int hi) {\n    for (int i = lo + 1; i <= hi; i++) {\n        int key = a[i], j = i - 1;\n        while (j >= lo && a[j] > key) { a[j + 1] = a[j]; j--; }\n        a[j + 1] = key;\n    }\n}",
+      },
+      {
         term: "트리 정렬 (Tree Sort)",
         oneliner: "BST에 원소를 삽입 후 중위 순회로 정렬. 균형 트리 사용 시 O(n log n) 보장",
         complexity: "평균 O(n log n) / 최악(편향 BST) O(n²) / 공간 O(n) / 안정 정렬 가능",

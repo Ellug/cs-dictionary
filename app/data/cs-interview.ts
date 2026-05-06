@@ -139,6 +139,20 @@ export const interviewSections: InterviewSection[] = [
     color: "yellow",
     items: [
       {
+        term: "객체지향 프로그래밍 (OOP)",
+        oneliner: "객체를 중심으로 상태와 행동을 묶고, 변경에 강한 구조를 만드는 프로그래밍 패러다임",
+        detail: [
+          "객체는 데이터(상태)와 메서드(행동)를 함께 가진 단위",
+          "핵심 목표는 복잡한 시스템을 역할과 책임 단위로 나누어 이해/확장/테스트하기 쉽게 만드는 것",
+          "4대 특성: 캡슐화, 상속, 다형성, 추상화",
+          "캡슐화: 내부 상태를 숨기고 공개 API로만 다루게 해 불변식 보호",
+          "추상화: 필요한 계약만 노출해 구현 교체와 의존성 관리를 쉽게 함",
+          "다형성: 같은 인터페이스로 여러 구현을 다룰 수 있어 조건 분기 감소",
+          "상속은 재사용 수단이지만 결합도가 높아질 수 있으므로 실무에서는 컴포지션과 함께 판단",
+          "면접 포인트: OOP는 '클래스를 많이 만드는 것'이 아니라 책임 분리와 변경 관리 전략이라고 설명",
+        ],
+      },
+      {
         term: "캡슐화 (Encapsulation)",
         oneliner: "데이터와 메서드를 묶고 외부 접근을 제한",
         detail: [
@@ -555,9 +569,13 @@ export const interviewSections: InterviewSection[] = [
         term: "프로세스 vs 스레드",
         oneliner: "프로세스는 독립 메모리 공간, 스레드는 프로세스 내 실행 단위",
         detail: [
-          "프로세스: 독립 메모리. 통신은 IPC(파이프, 소켓 등). 격리성 강함",
-          "스레드: 같은 힙 공유. 컨텍스트 스위칭 빠름. 경쟁 조건 주의",
-          "C# Thread vs Task: Task는 스레드풀 재사용 → 생성 비용 낮음",
+          "프로세스(Process): 실행 중인 프로그램의 인스턴스. 독립된 가상 주소 공간, 코드/데이터/힙/스택, OS 자원 핸들을 가짐",
+          "스레드(Thread): 프로세스 안에서 CPU가 실제로 실행하는 흐름. 같은 프로세스의 코드/힙/전역 데이터를 공유하고 각자 스택을 가짐",
+          "프로세스 간 메모리는 기본적으로 격리되어 안정성이 높지만 통신하려면 IPC(파이프, 소켓, 공유 메모리 등)가 필요",
+          "스레드는 메모리를 공유하므로 통신 비용이 낮지만 race condition, deadlock, visibility 문제가 생길 수 있음",
+          "컨텍스트 스위칭 비용은 일반적으로 프로세스보다 스레드가 가볍지만, 스레드도 무한정 만들면 스택 메모리/스케줄링 비용이 커짐",
+          "C# Thread는 OS 스레드에 가까운 직접 제어 수단, Task는 작업 단위 추상화로 보통 ThreadPool 위에서 실행",
+          "면접 포인트: '프로세스는 자원 격리 단위, 스레드는 실행 스케줄링 단위'라고 요약하면 정확함",
         ],
       },
       {
@@ -631,6 +649,22 @@ export const interviewSections: InterviewSection[] = [
     title: "Unity 클라이언트 성능 / 렌더링",
     color: "red",
     items: [
+      {
+        term: "Unity 동작 원리 / PlayerLoop",
+        oneliner: "Scene의 GameObject/Component들을 PlayerLoop가 프레임 단위로 갱신하고 렌더링까지 연결",
+        detail: [
+          "Unity는 Scene 안의 GameObject에 Component를 붙여 객체를 구성하는 컴포넌트 기반 엔진",
+          "Transform은 모든 GameObject의 공간 정보 기반이고, Renderer/Collider/Rigidbody/MonoBehaviour 등이 기능을 분담",
+          "런타임 핵심은 PlayerLoop: 입력 처리 → 스크립트 라이프사이클 → 애니메이션/물리 → LateUpdate → 렌더 준비 → GPU 제출 흐름",
+          "Awake/OnEnable/Start는 초기화, Update는 프레임 기반 로직, FixedUpdate는 고정 물리 타임스텝, LateUpdate는 후처리/카메라 추적에 주로 사용",
+          "물리는 고정 시간 간격으로 시뮬레이션되므로 입력은 Update에서 받고 Rigidbody 적용은 FixedUpdate로 넘기는 패턴이 흔함",
+          "렌더링은 카메라 기준 컬링, 렌더 큐 정렬, 배칭/SRP Batcher/Instancing, Draw Call 제출, GPU 래스터 단계로 이어짐",
+          "대부분의 UnityEngine API는 메인 스레드 전제. 백그라운드 작업은 순수 데이터 계산/로드 위주로 하고 결과 적용은 메인 스레드에서 처리",
+          "Coroutine은 별도 스레드가 아니라 PlayerLoop 안에서 yield 조건에 따라 나뉘어 실행되는 상태 머신에 가까움",
+          "Mono/IL2CPP 위의 C# 관리 객체는 GC 대상이므로 Update 루프의 문자열 생성, LINQ, boxing, Instantiate/Destroy 반복은 프레임 스파이크 원인이 될 수 있음",
+          "면접 포인트: 'Unity는 Update가 계속 도는 엔진'에서 멈추지 말고 객체 그래프, 실행 순서, 물리/렌더링/GC 병목까지 연결해 설명",
+        ],
+      },
       {
         term: "데이터 주도 설계 (DOD) / ECS",
         oneliner: "객체 중심이 아니라 데이터 배치와 접근 패턴 중심으로 성능을 설계",
@@ -973,14 +1007,31 @@ export const interviewSections: InterviewSection[] = [
         ],
       },
       {
+        term: "메모리 단편화 (내부 / 외부)",
+        oneliner: "내부 단편화는 할당 블록 안의 낭비, 외부 단편화는 빈 공간이 흩어진 상태",
+        detail: [
+          "내부 단편화: 요청 크기보다 큰 블록/슬롯을 받아 블록 내부에 남는 공간이 생김",
+          "예: 100B 객체를 128B 고정 슬롯에 넣으면 28B가 내부 단편화",
+          "외부 단편화: 총 여유 공간은 충분하지만 작은 빈 블록이 흩어져 큰 연속 메모리 할당이 어려운 상태",
+          "페이징은 고정 크기 페이지를 쓰므로 외부 단편화는 줄이지만 마지막 페이지 낭비 같은 내부 단편화가 생길 수 있음",
+          ".NET 관리 힙은 GC 압축(compaction)으로 일반 힙 외부 단편화를 완화하지만, LOH나 네이티브/엔진 메모리는 단편화 이슈가 더 민감할 수 있음",
+          "고정 크기 오브젝트 풀은 외부 단편화를 줄이고 할당 패턴을 안정화하지만, 슬롯 크기가 실제 객체보다 크면 내부 단편화가 생김",
+          "면접 포인트: 풀링은 '단편화를 무조건 없애는 기술'이 아니라 할당/해제 패턴을 통제해 단편화와 GC 빈도를 줄이는 전략",
+        ],
+      },
+      {
         term: "캐시 메모리",
         oneliner: "CPU와 RAM 사이 고속 메모리. 지역성(locality) 원리로 효과",
         detail: [
+          "CPU가 RAM에 직접 접근하면 너무 느리기 때문에 자주 쓸 가능성이 높은 데이터를 가까운 고속 메모리에 임시 저장",
           "시간적 지역성: 최근 접근한 데이터는 곧 또 접근할 가능성 높음",
           "공간적 지역성: 접근한 주소 근처도 곧 접근할 가능성 높음",
           "L1(코어 내) → L2(코어 내/공유) → L3(공유) → RAM → 디스크",
+          "캐시 라인(cache line): 캐시는 보통 64B 정도의 블록 단위로 데이터를 가져옴",
           "캐시 미스: Cold(첫 접근), Capacity(용량 초과), Conflict(매핑 충돌)",
           "배열 순차 접근이 랜덤 접근보다 빠른 이유 = 캐시 라인 활용",
+          "면접 포인트: 캐시는 용량은 작지만 빠르고, RAM은 크지만 느리며, 디스크/SSD는 더 크지만 훨씬 느림",
+          "게임/고성능 코드에서 struct 배열, NativeArray, SoA 구조가 빠른 이유도 캐시 지역성과 연결됨",
         ],
       },
       {
@@ -1134,6 +1185,21 @@ export const interviewSections: InterviewSection[] = [
         ],
       },
       {
+        term: "string 불변성 (Immutable String)",
+        oneliner: "C# string은 참조 타입이지만 내용 변경이 불가능한 불변 객체",
+        detail: [
+          "string은 System.String의 별칭. 변수는 참조를 들고 있지만 문자열 내용은 생성 후 변경 불가",
+          "Replace/Substring/ToUpper/연결(+)은 기존 string 수정이 아니라 새 string 생성",
+          "이유 1: 같은 문자열 참조를 여러 곳에서 공유해도 누군가 몰래 내용을 바꿀 수 없어 안전",
+          "이유 2: Dictionary 키로 쓸 때 Equals/GetHashCode 결과가 안정적. 가변 키는 삽입 후 검색이 깨질 수 있음",
+          "이유 3: string interning 가능. 리터럴 문자열을 하나의 인스턴스로 공유하려면 불변성이 필수",
+          "이유 4: 읽기 전용 공유라 스레드 간 전달이 안전하고, 복사 대신 참조 공유로 메모리 효율을 얻음",
+          "단점: 루프 내 += 는 매번 새 문자열 + 복사 → 누적 O(n²), GC Alloc 증가. StringBuilder/string.Create/Span 버퍼 고려",
+          "보안 주의: 비밀번호/토큰을 string으로 오래 보관하면 내용을 즉시 지울 수 없고 GC 전까지 메모리에 남을 수 있음",
+          "Unity 실무: Update/Debug.Log/UI 텍스트 갱신에서 문자열 생성이 반복되면 GC 스파이크 원인이 되므로 값 변경 시에만 갱신",
+        ],
+      },
+      {
         term: "string intern / == vs Equals",
         oneliner: "string은 == 가 값 비교지만, object는 참조 비교. 혼동 주의",
         detail: [
@@ -1166,6 +1232,20 @@ export const interviewSections: InterviewSection[] = [
           "면접 포인트: 제네릭 메서드와 비제네릭 오버로드의 선택 기준(타입 안정성/가독성/런타임 비용)",
           "실무 예시: 이벤트 버스를 Publish<TEvent>()로 설계하면 캐스팅 분기 없이 이벤트 확장이 가능",
           "실무 예시: DI에서 Open Generic(IRepository<T>) 등록으로 엔티티별 저장소 구현 중복을 줄임",
+        ],
+      },
+      {
+        term: "ArrayList vs List<T>",
+        oneliner: "ArrayList는 object 기반 비제네릭 컬렉션, List<T>는 타입 안전한 제네릭 동적 배열",
+        detail: [
+          "ArrayList는 System.Collections의 레거시 컬렉션으로 모든 요소를 object로 저장",
+          "List<T>는 System.Collections.Generic의 제네릭 컬렉션으로 컴파일 타임 타입을 보장",
+          "ArrayList에 값 타입(int, float 등)을 넣으면 object로 박싱되고 꺼낼 때 언박싱 필요",
+          "List<int>는 int를 그대로 저장하므로 박싱/언박싱 비용과 캐스팅 오류 위험이 없음",
+          "ArrayList는 서로 다른 타입을 섞어 넣을 수 있지만 런타임 캐스팅 오류가 발생하기 쉬움",
+          "List<T>는 내부적으로 배열을 사용하므로 인덱스 접근 O(1), 끝 삽입 amortized O(1), 중간 삽입/삭제 O(n)",
+          "면접 포인트: 'ArrayList는 유연해서 좋은가?'라는 질문에는 타입 안정성/성능/가독성 측면에서 대부분 List<T>가 우선이라고 답변",
+          "실무에서는 레거시 API 호환이나 object 컬렉션을 받아야 하는 경우가 아니면 ArrayList를 새 코드에 쓰지 않음",
         ],
       },
       {
@@ -1371,13 +1451,22 @@ export const interviewSections: InterviewSection[] = [
       },
       {
         term: "ObjectPool<T>",
-        oneliner: "생성 비용 큰 객체(StringBuilder, DB 연결 등)를 풀에서 재사용",
+        oneliner: "생성/파괴가 잦은 객체를 타입 안전하게 재사용해 GC와 초기화 비용을 줄임",
         detail: [
           "Microsoft.Extensions.ObjectPool.ObjectPool<T> (ASP.NET Core 제공)",
           "pool.Get()으로 빌리고, pool.Return(obj)로 반납",
+          "제네릭 `ObjectPool<T>`로 만들면 타입별 풀을 분리하고 object 캐스팅/박싱을 피할 수 있음",
+          "내부 자료구조: Stack<T>는 최근 반납 객체 재사용(LIFO)으로 캐시 지역성이 좋고, Queue<T>는 재사용 순서를 고르게 분산",
+          "개발 빌드에서는 HashSet<T>로 중복 반납(double return), 미등록 객체 반납을 검출하면 버그 추적이 쉬움",
           "StringBuilder 풀: new StringBuilder() 반복 생성 대신 풀에서 재사용",
           "DB 연결 풀(Connection Pooling): ADO.NET이 내부적으로 자동 관리",
-          "반납 전 객체 상태 초기화 필수 (민감한 데이터 잔류 방지)",
+          "Unity 예시: 탄환/이펙트/데미지 텍스트/임시 UI는 Instantiate/Destroy 반복보다 풀 재사용이 유리",
+          "반납 전 객체 상태 초기화 필수: active 상태, Transform, 이벤트 구독, 코루틴, 타이머, owner 참조, 민감 데이터 제거",
+          "풀 크기 상한(max size)과 초과 반납 정책이 없으면 피크 사용량을 계속 붙잡아 메모리 상주량이 증가",
+          "고정 크기 풀은 외부 단편화와 할당 변동을 줄일 수 있지만, 슬롯 크기보다 작은 객체에서는 내부 단편화가 생김",
+          "값 타입/핸들을 Stack<object>나 ArrayList에 넣으면 박싱 발생. Stack<T>, List<T>, Dictionary<int,T> 같은 제네릭 컬렉션 사용",
+          "스레드 안전성: 일반 Stack<T> 풀은 thread-safe가 아니므로 lock/ConcurrentBag/스레드 로컬 풀 고려. UnityEngine.Object 풀은 보통 메인 스레드에서 관리",
+          "면접 포인트: 풀링은 만능 최적화가 아니라 '반복 할당이 실제 병목인지', '상태 초기화 규약을 지킬 수 있는지', '메모리 상주 비용을 감당할 수 있는지'를 같이 판단",
         ],
       },
       {

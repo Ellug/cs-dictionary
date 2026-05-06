@@ -78,6 +78,80 @@ export const hotQuestionSections: HotQuestionSection[] = [
         ],
       },
       {
+        id: "string-immutability",
+        question: "C#에서 String이 불변 객체인 이유에 대해 설명해주세요.",
+        oneLiner: "문자열 공유, 해시 안정성, 스레드 안전성, 런타임 최적화를 위해 한 번 만든 문자열은 바꾸지 않는다.",
+        difficulty: "중급",
+        keywords: ["string", "System.String", "불변 객체", "intern", "StringBuilder", "GC"],
+        modelAnswer: [
+          "C#의 string은 System.String의 별칭이며 참조 타입이지만, 한 번 생성된 문자열의 내용은 변경할 수 없는 불변 객체입니다.",
+          "문자열을 수정하는 것처럼 보이는 `Replace`, `Substring`, `+` 연산은 기존 객체를 바꾸는 것이 아니라 새 string 객체를 만듭니다.",
+          "불변이면 여러 코드가 같은 문자열 참조를 공유해도 누군가 내용물을 바꿔 다른 코드가 영향을 받는 문제가 없습니다.",
+          "또한 string을 Dictionary 키로 사용할 때 해시 값과 동등성 결과가 안정적으로 유지됩니다. 키가 바뀌면 해시 테이블의 버킷 위치가 깨질 수 있습니다.",
+          "string interning처럼 동일한 리터럴을 하나의 인스턴스로 공유하는 최적화도 불변성이 전제라서 안전합니다.",
+          "읽기 전용 공유가 가능하므로 스레드 간 전달도 비교적 안전하며, 복사 대신 참조 공유로 메모리를 아낄 수 있습니다.",
+          "대신 반복 연결은 매번 새 문자열과 복사를 만들 수 있어 GC 압박과 O(n^2) 비용이 생기므로 루프에서는 StringBuilder, string.Create, Span/버퍼 재사용을 고려합니다.",
+        ],
+        followUps: [
+          {
+            question: "string이 참조 타입인데 왜 값 타입처럼 비교되는 것처럼 보이나요?",
+            modelAnswer: [
+              "string은 참조 타입이지만 `==` 연산자가 내용 비교로 오버로드되어 있습니다.",
+              "따라서 `a == b`는 보통 문자열 내용 비교이고, 참조 동일성을 보고 싶다면 ReferenceEquals(a, b)를 사용합니다.",
+              "단, object로 업캐스팅된 뒤 `==`를 쓰면 object의 참조 비교 규칙이 적용될 수 있어 Equals 사용이 더 명확합니다.",
+            ],
+          },
+          {
+            question: "반복문에서 `str += value`가 왜 성능 문제가 되나요?",
+            modelAnswer: [
+              "string은 불변이므로 `+=`는 기존 버퍼에 덧붙이는 것이 아니라 새 문자열을 만들고 기존 내용과 새 내용을 복사합니다.",
+              "반복 횟수가 많아질수록 누적 복사량이 커져 O(n^2)에 가까운 비용이 발생할 수 있습니다.",
+              "게임 클라이언트에서는 프레임마다 문자열을 만들면 GC Alloc과 프레임 스파이크로 이어지기 쉬우므로 StringBuilder나 재사용 버퍼를 씁니다.",
+            ],
+          },
+          {
+            question: "StringBuilder는 string과 무엇이 다른가요?",
+            modelAnswer: [
+              "StringBuilder는 내부 버퍼를 가진 가변 객체라 Append 시 매번 최종 string을 새로 만들지 않습니다.",
+              "여러 번 조립한 뒤 마지막에 ToString()으로 한 번만 string을 생성하는 용도에 적합합니다.",
+              "단순한 2~3개 문자열 결합은 컴파일러/JIT 최적화가 잘 되므로 무조건 StringBuilder가 빠르다고 보면 안 됩니다.",
+            ],
+          },
+          {
+            question: "string interning과 불변성은 어떤 관계가 있나요?",
+            modelAnswer: [
+              "interning은 같은 내용의 문자열 리터럴을 하나의 인스턴스로 공유하는 최적화입니다.",
+              "만약 문자열이 가변이라면 한 참조에서 내용을 바꿨을 때 같은 intern 객체를 공유하는 모든 코드가 영향을 받으므로 안전하지 않습니다.",
+              "따라서 intern pool은 string이 불변이라는 전제 위에서 동작합니다.",
+            ],
+          },
+          {
+            question: "string을 Dictionary 키로 자주 쓰는 이유는 무엇인가요?",
+            modelAnswer: [
+              "string은 불변이라 삽입 후 내용과 해시 코드 의미가 바뀌지 않아 해시 테이블 키로 안전합니다.",
+              "키가 가변 객체라 삽입 후 Equals/GetHashCode 결과가 바뀌면 Dictionary가 해당 키를 찾지 못할 수 있습니다.",
+              "그래서 키 타입은 불변 값, 식별자, record처럼 동등성 기준이 안정적인 타입이 적합합니다.",
+            ],
+          },
+          {
+            question: "비밀번호나 토큰을 string으로 오래 들고 있으면 어떤 문제가 있나요?",
+            modelAnswer: [
+              "string은 불변이라 내용을 덮어써서 지울 수 없고, GC가 수거하기 전까지 메모리에 남을 수 있습니다.",
+              "또한 substring, logging, exception message 같은 경로로 의도치 않게 복사본이 생길 수 있습니다.",
+              "민감 데이터는 가능하면 생명주기를 짧게 유지하고, 필요 시 byte[]/char[] 같은 지울 수 있는 버퍼와 로깅 마스킹을 고려합니다.",
+            ],
+          },
+          {
+            question: "Unity에서 string 불변성과 관련된 실무 이슈는 무엇인가요?",
+            modelAnswer: [
+              "Update 루프의 문자열 보간, Debug.Log 메시지 조립, UI 텍스트 반복 갱신은 매 프레임 새 string을 만들 수 있습니다.",
+              "Profiler의 GC Alloc으로 확인하고, 값이 바뀔 때만 갱신하거나 StringBuilder/캐시/TMP SetText 계열 API를 사용해 할당을 줄입니다.",
+              "핵심은 string 자체가 나쁜 것이 아니라 hot path에서 반복 생성되는 패턴을 제거하는 것입니다.",
+            ],
+          },
+        ],
+      },
+      {
         id: "generic-deep",
         question: "제네릭이 성능과 설계 측면에서 왜 중요한지 설명해보세요.",
         oneLiner: "타입 안정성과 박싱 제거를 동시에 얻는 핵심 도구다.",
@@ -267,20 +341,86 @@ export const hotQuestionSections: HotQuestionSection[] = [
       {
         id: "object-pooling",
         question: "오브젝트 풀링을 언제 적용하고, 실패하는 경우는 어떤 경우인가요?",
-        oneLiner: "생성/파괴가 잦고 생명주기가 짧은 객체에서 효과가 크다.",
+        oneLiner: "생성/파괴가 잦고 생명주기가 짧은 객체를 재사용해 할당, GC, 초기화 비용을 줄인다.",
         difficulty: "중급",
-        keywords: ["Object Pool", "GC Alloc", "메모리 최적화"],
+        keywords: ["Object Pool", "Generic", "Stack", "Queue", "Boxing", "Fragmentation", "GC Alloc"],
         modelAnswer: [
-          "탄환, 이펙트, 임시 UI처럼 생성/파괴 빈도가 높은 객체에서 풀링 효과가 큽니다.",
-          "풀 반환 시 상태 초기화가 불완전하면 유령 상태 버그가 생기므로 reset 규약이 중요합니다.",
-          "풀 크기 상한이 없으면 메모리 점유가 누적될 수 있어 워터마크 정책을 둬야 합니다.",
-          "Profiler로 할당 병목이 확인된 뒤 적용해야 하며, 저빈도 객체까지 과도하게 풀링하면 오히려 복잡도만 증가합니다.",
+          "오브젝트 풀링은 객체를 매번 생성/파괴하지 않고 미리 만들거나 필요 시 만든 뒤 반납받아 재사용하는 기법입니다.",
+          "탄환, 이펙트, 데미지 텍스트, 임시 UI, StringBuilder, byte[] 버퍼처럼 생성 빈도가 높고 생명주기가 짧은 객체에서 효과가 큽니다.",
+          "핵심 효과는 할당 횟수 감소, GC Alloc 감소, Instantiate/Destroy 초기화 비용 감소, 메모리 사용 패턴 안정화입니다.",
+          "구현은 보통 `ObjectPool<T>`처럼 제네릭으로 만들고, 내부 자료구조는 LIFO 재사용성이 좋은 `Stack<T>`나 순서를 보장하기 쉬운 `Queue<T>`를 선택합니다.",
+          "값 타입이나 ID를 `object` 컬렉션에 넣는 식으로 풀을 만들면 박싱/언박싱이 생기므로 `Stack<T>`, `List<T>`, `Dictionary<int, T>` 같은 제네릭 컬렉션을 써야 합니다.",
+          "반납 시 active 플래그, Transform, 이벤트 구독, 코루틴, 타이머, 소유자 참조, 민감 데이터 등을 초기화하지 않으면 이전 사용자의 상태가 새 사용자에게 새는 버그가 납니다.",
+          "풀 크기 상한과 초과 반납 정책이 없으면 메모리 점유가 계속 증가할 수 있으므로 초기 크기, max size, warm-up, shrink 정책을 정해야 합니다.",
+          "풀링은 메모리 단편화를 완전히 없애는 기술은 아니지만, 같은 크기 객체를 반복 재사용하면 할당/해제 패턴이 안정되어 단편화와 GC 빈도를 줄이는 데 도움이 됩니다.",
+          "Profiler로 실제 할당 병목이 확인된 뒤 적용해야 하며, 저빈도 객체나 상태가 복잡한 객체까지 과도하게 풀링하면 메모리 상주 비용과 버그 가능성이 더 커집니다.",
         ],
         followUps: [
           {
             question: "Addressables와 풀링을 같이 쓸 때 주의점은?",
             modelAnswer: [
               "참조 카운트 해제 시점과 풀 보관 객체의 생명주기가 충돌하지 않게 ownership을 명확히 해야 합니다.",
+              "풀에 아직 인스턴스가 남아 있는데 원본 Addressable 핸들을 release하면 다음 재사용 시 missing reference나 재로드 비용이 발생할 수 있습니다.",
+              "풀 자체가 에셋 핸들을 소유하는지, 씬/스폰 시스템이 소유하는지 정책을 정하고 Dispose/ReleaseAll 단계에서 한 번에 정리합니다.",
+            ],
+          },
+          {
+            question: "제네릭 `ObjectPool<T>`로 구현하면 어떤 장점이 있나요?",
+            modelAnswer: [
+              "타입별 풀을 컴파일 타임에 분리할 수 있어 잘못된 타입 반납이나 캐스팅 오류를 줄입니다.",
+              "`object` 기반 풀과 달리 값 타입이나 핸들 구조체를 다룰 때 박싱/언박싱을 피할 수 있습니다.",
+              "`Func<T> create`, `Action<T> onGet`, `Action<T> onRelease`, `Action<T> onDestroy` 같은 훅을 주면 생성/초기화/반납 규약을 타입별로 강제할 수 있습니다.",
+            ],
+          },
+          {
+            question: "풀 내부 자료구조는 Stack, Queue, List 중 무엇이 적합한가요?",
+            modelAnswer: [
+              "`Stack<T>`는 마지막에 반납한 객체를 다시 꺼내므로 CPU 캐시 지역성이 좋고 구현이 단순해 일반적인 풀에 많이 씁니다.",
+              "`Queue<T>`는 오래 대기한 객체부터 재사용하므로 사용 빈도를 고르게 분산하고 싶을 때 선택할 수 있습니다.",
+              "`List<T>`는 임의 제거나 전체 순회에는 유리하지만 단순 Get/Return 풀에는 Stack/Queue보다 의도가 덜 명확할 수 있습니다.",
+              "중복 반납 검출이 필요하면 개발 빌드에서 `HashSet<T>`를 같이 둬 double return을 잡는 식으로 보완합니다.",
+            ],
+          },
+          {
+            question: "오브젝트 풀링과 박싱/언박싱은 어떻게 연결되나요?",
+            modelAnswer: [
+              "풀 자체를 `Stack<object>`나 `ArrayList`로 만들면 값 타입을 넣을 때 박싱되고 꺼낼 때 언박싱/캐스팅이 필요합니다.",
+              "이러면 풀링으로 할당을 줄이려다 박싱 할당을 새로 만드는 모순이 생깁니다.",
+              "타입별 `ObjectPool<T>`, `Stack<T>`, `List<T>`를 사용하고, 값 타입 비교는 `IEquatable<T>`나 `EqualityComparer<T>.Default`를 활용해 박싱을 피합니다.",
+            ],
+          },
+          {
+            question: "내부 단편화와 외부 단편화 차이를 설명하고 풀링과 연결해보세요.",
+            modelAnswer: [
+              "내부 단편화는 할당받은 블록 안에서 실제 사용하지 않는 낭비 공간입니다. 예를 들어 100B가 필요한데 128B 슬롯을 받으면 남는 28B가 내부 단편화입니다.",
+              "외부 단편화는 전체 여유 메모리는 충분하지만 작은 빈 공간들이 흩어져 큰 연속 블록을 할당하지 못하는 상태입니다.",
+              "고정 크기 슬롯 풀은 외부 단편화를 줄이는 대신 슬롯 크기보다 작은 객체에서 내부 단편화를 만들 수 있습니다.",
+              ".NET 관리 힙은 GC 압축으로 일반 힙 단편화를 완화하지만, 큰 객체가 들어가는 LOH나 네이티브/엔진 메모리는 단편화 이슈가 더 두드러질 수 있습니다.",
+            ],
+          },
+          {
+            question: "풀링이 오히려 실패하는 대표 사례는 무엇인가요?",
+            modelAnswer: [
+              "객체 상태 초기화가 복잡해 반납 누락, 이벤트 구독 누수, 코루틴 잔존 같은 유령 상태 버그가 생기는 경우입니다.",
+              "한 번에 최대 사용량이 매우 큰데 풀을 줄이지 않아 피크 메모리를 계속 붙잡는 경우도 실패입니다.",
+              "생성 비용이 낮고 빈도가 낮은 객체까지 풀링하면 성능 이득보다 코드 복잡도와 메모리 상주 비용이 커집니다.",
+              "Unity에서는 비활성 GameObject도 Transform 계층, 컴포넌트 참조, 에셋 참조를 유지하므로 풀에 쌓인 객체가 실제 메모리를 계속 잡을 수 있습니다.",
+            ],
+          },
+          {
+            question: "풀 크기는 어떻게 정하나요?",
+            modelAnswer: [
+              "동시 활성 객체 수의 평균/피크를 Profiler와 게임 로그로 측정해 초기 용량과 최대 용량을 정합니다.",
+              "전투 시작 전 warm-up으로 첫 스폰 hitch를 줄이고, 전투 종료 후 일정 기준 이상은 파괴하거나 Addressables release 대상으로 넘길 수 있습니다.",
+              "정답 숫자는 없고, 프레임 스파이크 감소와 메모리 상주량 사이의 트레이드오프를 지표로 결정합니다.",
+            ],
+          },
+          {
+            question: "멀티스레드 환경에서도 같은 풀을 공유해도 되나요?",
+            modelAnswer: [
+              "일반적인 `Stack<T>` 기반 풀은 스레드 안전하지 않으므로 lock, ConcurrentQueue/ConcurrentBag, 스레드 로컬 풀 등을 고려해야 합니다.",
+              "다만 UnityEngine.Object, GameObject, Transform은 대부분 메인 스레드 접근 전제라 백그라운드 스레드에서 직접 Get/Return 후 Unity API를 호출하면 위험합니다.",
+              "백그라운드에서는 byte[]나 순수 데이터 버퍼 풀을 사용하고, 씬 객체 풀은 메인 스레드에서 관리하는 식으로 나누는 것이 안전합니다.",
             ],
           },
         ],
@@ -408,6 +548,57 @@ export const hotQuestionSections: HotQuestionSection[] = [
         ],
       },
       {
+        id: "arraylist-vs-list",
+        question: "ArrayList와 List<T>의 차이를 설명해보세요.",
+        oneLiner: "ArrayList는 object 기반 레거시 컬렉션이고, List<T>는 타입 안전한 제네릭 컬렉션이다.",
+        difficulty: "중급",
+        keywords: ["ArrayList", "List<T>", "제네릭", "박싱", "타입 안정성", "GC"],
+        modelAnswer: [
+          "ArrayList는 비제네릭 컬렉션이라 내부에 요소를 object로 저장합니다.",
+          "List<T>는 제네릭 컬렉션이라 컴파일 타임에 요소 타입을 고정하고 타입 안정성을 보장합니다.",
+          "ArrayList에 int 같은 값 타입을 넣으면 박싱이 발생하고, 꺼낼 때 언박싱과 캐스팅이 필요합니다.",
+          "List<int>는 int를 그대로 다루므로 박싱/언박싱 비용과 런타임 캐스팅 오류 위험이 줄어듭니다.",
+          "그래서 새 코드에서는 특별한 레거시 호환 이유가 없으면 ArrayList보다 List<T>를 선택하는 것이 일반적입니다.",
+        ],
+        followUps: [
+          {
+            question: "ArrayList가 object를 받으면 더 유연한데 왜 문제가 되나요?",
+            modelAnswer: [
+              "여러 타입을 섞어 넣을 수 있다는 유연성은 컴파일 타임 검증을 포기한다는 뜻입니다.",
+              "꺼내는 쪽에서 매번 캐스팅해야 하며, 잘못된 타입이 들어간 경우 런타임 예외로 늦게 터집니다.",
+            ],
+          },
+          {
+            question: "박싱/언박싱이 정확히 왜 비용인가요?",
+            modelAnswer: [
+              "박싱은 값 타입을 힙의 object로 감싸는 새 객체 할당이고, 언박싱은 다시 값 타입으로 꺼내는 변환입니다.",
+              "반복 루프나 대량 컬렉션에서 힙 할당과 GC 압박이 누적되어 성능 문제가 됩니다.",
+            ],
+          },
+          {
+            question: "ArrayList와 List<object>는 같은가요?",
+            modelAnswer: [
+              "둘 다 object를 담을 수 있다는 점은 비슷하지만 List<object>는 제네릭 컬렉션 API와 타입 인자가 명시된 구조입니다.",
+              "다만 List<object>도 값 타입을 넣으면 object로 박싱되므로 List<int> 같은 구체 타입 컬렉션과 성능 특성이 다릅니다.",
+            ],
+          },
+          {
+            question: "ArrayList는 내부 구조가 LinkedList처럼 노드 기반인가요?",
+            modelAnswer: [
+              "아닙니다. ArrayList도 List<T>처럼 내부 배열 기반 동적 배열입니다.",
+              "차이의 핵심은 배열 기반 여부가 아니라 비제네릭 object 저장과 제네릭 타입 안정성입니다.",
+            ],
+          },
+          {
+            question: "면접에서 ArrayList를 써도 되는 상황을 물으면 어떻게 답하나요?",
+            modelAnswer: [
+              "레거시 .NET API와 호환해야 하거나 타입이 정말 object로 통일된 오래된 코드에서는 만날 수 있습니다.",
+              "하지만 새 코드라면 List<T>, Collection<T>, IReadOnlyList<T> 등 제네릭 컬렉션을 우선 선택한다고 답하는 것이 안전합니다.",
+            ],
+          },
+        ],
+      },
+      {
         id: "hashmap-collision",
         question: "Dictionary/HashMap의 평균 O(1)이 깨지는 경우와 충돌 처리 방식을 설명해보세요.",
         oneLiner: "해시 충돌과 리사이즈 비용을 이해해야 한다.",
@@ -480,6 +671,74 @@ export const hotQuestionSections: HotQuestionSection[] = [
     title: "OOP / 설계 판단",
     color: "yellow",
     items: [
+      {
+        id: "oop-explain",
+        question: "객체지향 프로그래밍에 대해 설명해주세요.",
+        oneLiner: "객체의 상태와 행동을 묶고 책임 단위로 시스템을 나누는 프로그래밍 방식이다.",
+        difficulty: "기초",
+        keywords: ["OOP", "객체지향", "캡슐화", "상속", "다형성", "추상화"],
+        modelAnswer: [
+          "객체지향 프로그래밍은 현실이나 도메인의 개념을 객체로 모델링하고, 객체들이 협력하면서 문제를 해결하는 방식입니다.",
+          "객체는 상태를 나타내는 데이터와 그 상태를 다루는 행동을 함께 가집니다.",
+          "핵심 특성은 캡슐화, 추상화, 상속, 다형성입니다.",
+          "캡슐화는 내부 상태를 숨기고 공개 API로만 조작하게 해 객체의 불변식을 보호합니다.",
+          "추상화와 다형성은 구현체를 교체 가능하게 만들어 조건 분기를 줄이고 확장성을 높입니다.",
+          "다만 OOP는 클래스를 많이 만드는 것이 목적이 아니라, 책임을 적절히 나누고 변경 영향을 줄이는 설계 방식이라고 설명할 수 있습니다.",
+        ],
+        followUps: [
+          {
+            question: "객체지향의 4대 특성을 각각 설명해보세요.",
+            modelAnswer: [
+              "캡슐화는 데이터와 행동을 묶고 외부 접근을 제한하는 것입니다.",
+              "추상화는 중요한 계약만 드러내고 세부 구현을 숨기는 것입니다.",
+              "상속은 기존 타입의 속성과 행동을 물려받아 확장하는 것입니다.",
+              "다형성은 같은 인터페이스나 부모 타입으로 여러 구현을 동일하게 다루는 것입니다.",
+            ],
+          },
+          {
+            question: "다형성은 C#에서 어떻게 구현하나요?",
+            modelAnswer: [
+              "대표적으로 interface, abstract class, virtual/override를 사용합니다.",
+              "예를 들어 IAttackPolicy 인터페이스를 두고 MeleeAttack, RangeAttack 구현체를 교체하면 호출부는 구체 타입을 몰라도 됩니다.",
+            ],
+          },
+          {
+            question: "상속의 단점은 무엇인가요?",
+            modelAnswer: [
+              "부모 구현과 계약에 강하게 묶여 변경 영향이 아래 타입으로 전파됩니다.",
+              "상속 계층이 깊어지면 실제 동작을 추적하기 어렵고, 잘못된 is-a 관계는 LSP 위반으로 이어질 수 있습니다.",
+            ],
+          },
+          {
+            question: "컴포지션이 상속보다 낫다는 말은 무슨 뜻인가요?",
+            modelAnswer: [
+              "변하는 행동을 부모 클래스에 고정하지 않고 별도 객체로 조합하면 런타임 교체와 테스트가 쉬워집니다.",
+              "상속은 안정적인 is-a 관계에 쓰고, 정책/행동 변경은 컴포지션으로 분리하는 판단이 중요합니다.",
+            ],
+          },
+          {
+            question: "객체지향과 SOLID는 어떤 관계인가요?",
+            modelAnswer: [
+              "SOLID는 객체지향 코드를 변경에 강하게 만들기 위한 설계 원칙입니다.",
+              "예를 들어 SRP는 책임 분리를, OCP/DIP는 추상화와 다형성을 이용한 확장을 강조합니다.",
+            ],
+          },
+          {
+            question: "게임 클라이언트에서 객체지향을 적용한 예시를 들어보세요.",
+            modelAnswer: [
+              "캐릭터를 Player, Monster로 단순 상속하기보다 이동/공격/상태 효과를 각각 IMovement, IAttackPolicy, IStatusEffect 같은 책임으로 분리할 수 있습니다.",
+              "이렇게 하면 신규 공격 방식이나 상태 효과를 추가할 때 기존 캐릭터 코드를 덜 수정하게 됩니다.",
+            ],
+          },
+          {
+            question: "객체지향의 단점이나 한계는 무엇인가요?",
+            modelAnswer: [
+              "객체가 힙에 흩어지면 캐시 효율이 떨어질 수 있고, 과한 추상화는 구조를 복잡하게 만듭니다.",
+              "대량 데이터 처리나 성능 hot path에서는 DOD/ECS 같은 데이터 중심 설계가 더 적합할 수 있습니다.",
+            ],
+          },
+        ],
+      },
       {
         id: "inheritance-composition",
         question: "상속보다 컴포지션을 선호하라는 말의 의미를 설명해보세요.",
@@ -554,22 +813,139 @@ export const hotQuestionSections: HotQuestionSection[] = [
     items: [
       {
         id: "process-thread-task",
-        question: "Process, Thread, Task의 차이를 설명해보세요.",
-        oneLiner: "격리 단위, 실행 단위, 작업 추상화의 차이다.",
+        question: "프로세스와 쓰레드에 대해 설명해주세요.",
+        oneLiner: "프로세스는 자원 격리 단위, 쓰레드는 CPU가 실행하는 흐름이다.",
         difficulty: "기초",
-        keywords: ["Process", "Thread", "Task", "ThreadPool", "async"],
+        keywords: ["Process", "Thread", "주소 공간", "Context Switching", "동기화"],
         modelAnswer: [
-          "Process는 독립 주소 공간을 가진 실행 단위라 격리성이 강하지만 생성/전환 비용이 큽니다.",
-          "Thread는 프로세스 내부에서 힙을 공유하는 실행 흐름이라 가볍지만 동기화 문제가 생깁니다.",
-          "Task는 작업 단위 추상화이며 보통 ThreadPool 위에서 실행됩니다.",
-          "I/O 비동기는 스레드를 점유하지 않고 대기하고, CPU 작업은 필요하면 Task.Run으로 워커 스레드에 넘깁니다.",
+          "프로세스는 실행 중인 프로그램의 인스턴스로, OS로부터 독립된 주소 공간과 자원을 할당받습니다.",
+          "각 프로세스는 기본적으로 서로의 메모리에 직접 접근할 수 없어서 안정성과 격리성이 좋습니다.",
+          "쓰레드는 프로세스 내부에서 실제 명령을 실행하는 흐름이며, 같은 프로세스의 코드/힙/전역 데이터를 공유합니다.",
+          "대신 쓰레드마다 독립적인 스택과 레지스터 상태를 가지고 스케줄러에 의해 CPU 시간을 배정받습니다.",
+          "프로세스는 격리가 강하지만 생성과 통신 비용이 크고, 쓰레드는 가볍고 공유가 쉬운 대신 동기화 문제가 생깁니다.",
+          "면접에서는 '프로세스는 자원과 격리의 단위, 쓰레드는 실행과 스케줄링의 단위'라고 정리하면 좋습니다.",
         ],
         followUps: [
           {
-            question: "async/await가 새 스레드를 만드는 건가요?",
+            question: "프로세스끼리는 메모리를 공유하지 못하는데 어떻게 통신하나요?",
             modelAnswer: [
-              "아닙니다. await는 비동기 작업 완료 시점을 등록하고 현재 스레드를 반환하는 모델입니다.",
-              "CPU 작업을 병렬로 실행하려면 별도로 Task.Run이나 병렬 처리 구조가 필요합니다.",
+              "파이프, 소켓, 메시지 큐, 파일, 공유 메모리 같은 IPC를 사용합니다.",
+              "공유 메모리는 빠르지만 별도 동기화가 필요하고, 소켓/파이프는 격리가 명확하지만 상대적으로 비용이 큽니다.",
+            ],
+          },
+          {
+            question: "쓰레드가 메모리를 공유하면 어떤 문제가 생기나요?",
+            modelAnswer: [
+              "여러 쓰레드가 같은 데이터를 동시에 읽고 쓰면 race condition이 생길 수 있습니다.",
+              "이를 막기 위해 lock, Monitor, Mutex, Semaphore, Interlocked 같은 동기화 도구를 사용합니다.",
+              "동기화가 잘못되면 deadlock, starvation, priority inversion 같은 문제가 이어질 수 있습니다.",
+            ],
+          },
+          {
+            question: "프로세스 컨텍스트 스위칭과 쓰레드 컨텍스트 스위칭은 뭐가 다른가요?",
+            modelAnswer: [
+              "둘 다 CPU가 실행 대상을 바꾸며 레지스터/스택 포인터 등 실행 문맥을 저장하고 복원하는 작업입니다.",
+              "프로세스 전환은 주소 공간 변경과 TLB/cache 영향이 더 커서 일반적으로 쓰레드 전환보다 비용이 큽니다.",
+              "다만 쓰레드 전환도 공짜는 아니므로 과도한 쓰레드 생성은 성능을 떨어뜨립니다.",
+            ],
+          },
+          {
+            question: "쓰레드는 각자 무엇을 독립적으로 가지고, 무엇을 공유하나요?",
+            modelAnswer: [
+              "각 쓰레드는 스택, 레지스터 상태, 스레드 로컬 저장소 등을 독립적으로 가집니다.",
+              "같은 프로세스의 힙, 코드 영역, 전역/정적 데이터, 파일 핸들 같은 자원은 공유합니다.",
+              "그래서 지역 변수는 대체로 각 스택에 있지만, 참조하는 객체가 힙에 있으면 여러 쓰레드가 함께 볼 수 있습니다.",
+            ],
+          },
+          {
+            question: "C#에서 Thread와 Task는 어떻게 다른가요?",
+            modelAnswer: [
+              "Thread는 OS 스레드를 직접 만들고 제어하는 저수준 API에 가깝습니다.",
+              "Task는 '수행할 작업'을 표현하는 고수준 추상화이며 보통 ThreadPool의 워커 스레드에서 실행됩니다.",
+              "대부분의 일반 비동기/병렬 작업은 Thread를 직접 만들기보다 Task, async/await, ThreadPool을 우선 고려합니다.",
+            ],
+          },
+          {
+            question: "async/await가 새 쓰레드를 만드는 건가요?",
+            modelAnswer: [
+              "아닙니다. await는 비동기 작업이 끝난 뒤 이어서 실행할 continuation을 등록하는 문법입니다.",
+              "I/O 대기 중에는 쓰레드를 붙잡지 않고 반환할 수 있으며, CPU 병렬 처리가 필요하면 Task.Run 같은 별도 실행이 필요합니다.",
+            ],
+          },
+          {
+            question: "멀티프로세스와 멀티쓰레드 중 어떤 구조가 더 안전한가요?",
+            modelAnswer: [
+              "안정성과 장애 격리는 멀티프로세스가 유리합니다. 한 프로세스가 죽어도 다른 프로세스 메모리를 직접 망가뜨리기 어렵습니다.",
+              "성능과 데이터 공유 비용은 멀티쓰레드가 유리할 수 있지만 동기화와 디버깅 난도가 올라갑니다.",
+              "결국 격리, 통신 비용, 장애 전파, 구현 복잡도를 기준으로 선택합니다.",
+            ],
+          },
+        ],
+      },
+      {
+        id: "hardware-cache",
+        question: "컴퓨터 부품 중 캐시는 무엇인가요?",
+        oneLiner: "CPU와 RAM 사이 속도 차이를 줄이기 위한 작고 빠른 임시 저장소다.",
+        difficulty: "기초",
+        keywords: ["Cache", "CPU Cache", "L1", "L2", "L3", "Locality", "Cache Line"],
+        modelAnswer: [
+          "캐시는 CPU가 자주 사용할 가능성이 높은 데이터나 명령어를 가까운 고속 메모리에 임시로 저장하는 장치입니다.",
+          "CPU는 RAM보다 훨씬 빠르기 때문에 RAM에 매번 직접 접근하면 대기 시간이 커집니다.",
+          "그래서 L1, L2, L3 같은 캐시 계층을 두고, CPU는 먼저 가까운 캐시에서 데이터를 찾습니다.",
+          "캐시는 시간적 지역성(방금 쓴 데이터는 또 쓸 가능성이 높음)과 공간적 지역성(근처 주소도 곧 쓸 가능성이 높음)을 이용합니다.",
+          "캐시에 있으면 cache hit, 없어서 RAM까지 가야 하면 cache miss이며, miss가 많을수록 성능이 떨어집니다.",
+        ],
+        followUps: [
+          {
+            question: "L1, L2, L3 캐시는 어떻게 다르나요?",
+            modelAnswer: [
+              "보통 L1이 가장 작고 가장 빠르며 코어에 가장 가깝습니다.",
+              "L2는 L1보다 크지만 조금 느리고, L3는 더 크고 여러 코어가 공유하는 경우가 많습니다.",
+              "계층이 내려갈수록 용량은 커지고 접근 속도는 느려지는 구조입니다.",
+            ],
+          },
+          {
+            question: "캐시 라인(Cache Line)이 무엇인가요?",
+            modelAnswer: [
+              "캐시는 바이트 하나씩이 아니라 보통 64B 정도의 블록 단위로 데이터를 가져옵니다.",
+              "이 블록을 캐시 라인이라고 하며, 배열을 순차 접근할 때 주변 데이터까지 함께 들어와 성능이 좋아집니다.",
+            ],
+          },
+          {
+            question: "배열 순회가 LinkedList 순회보다 빠른 이유를 캐시 관점에서 설명해보세요.",
+            modelAnswer: [
+              "배열은 메모리에 연속적으로 배치되어 한 캐시 라인에 여러 원소가 같이 들어옵니다.",
+              "LinkedList는 노드가 힙 곳곳에 흩어질 수 있어 다음 노드를 따라갈 때 캐시 미스가 자주 발생합니다.",
+            ],
+          },
+          {
+            question: "캐시 미스 종류에는 무엇이 있나요?",
+            modelAnswer: [
+              "Cold miss는 처음 접근해서 아직 캐시에 없는 경우입니다.",
+              "Capacity miss는 캐시 용량이 부족해 필요한 데이터가 밀려난 경우입니다.",
+              "Conflict miss는 캐시 매핑 충돌 때문에 다른 데이터가 같은 위치를 차지해 발생하는 경우입니다.",
+            ],
+          },
+          {
+            question: "캐시와 레지스터, RAM은 어떻게 다른가요?",
+            modelAnswer: [
+              "레지스터는 CPU 내부의 가장 빠르고 아주 작은 저장 공간입니다.",
+              "캐시는 레지스터보다 크고 느리지만 RAM보다 훨씬 빠른 중간 계층입니다.",
+              "RAM은 용량이 크지만 CPU 입장에서는 상대적으로 느린 주기억장치입니다.",
+            ],
+          },
+          {
+            question: "멀티스레딩에서 캐시 때문에 생기는 문제는 무엇이 있나요?",
+            modelAnswer: [
+              "대표적으로 false sharing이 있습니다. 서로 다른 변수를 수정해도 같은 캐시 라인에 있으면 코어 간 캐시 무효화가 반복됩니다.",
+              "정합성 문제는 아니지만 성능이 크게 떨어질 수 있어 패딩, 데이터 분리, 스레드 로컬 누적 같은 방식으로 완화합니다.",
+            ],
+          },
+          {
+            question: "게임 클라이언트에서 캐시를 고려한 설계 예시는 무엇인가요?",
+            modelAnswer: [
+              "대량 오브젝트 업데이트에서 class 객체들을 흩뿌리는 대신 struct 배열이나 NativeArray처럼 연속 메모리 구조를 쓰는 방식입니다.",
+              "ECS/DOD가 성능에 유리한 이유도 같은 종류의 데이터를 청크에 모아 캐시 적중률을 높이기 때문입니다.",
             ],
           },
         ],
@@ -739,6 +1115,80 @@ export const hotQuestionSections: HotQuestionSection[] = [
     title: "Unity 게임플레이 / 에셋 / 엔진",
     color: "red",
     items: [
+      {
+        id: "unity-engine-runtime",
+        question: "유니티 동작 원리에 대해 설명해주세요.",
+        oneLiner: "Scene의 GameObject/Component들을 PlayerLoop가 프레임 단위로 갱신하고, 물리·스크립트·렌더링·GC가 그 안에서 순서대로 맞물린다.",
+        difficulty: "중급",
+        keywords: ["Unity", "PlayerLoop", "GameObject", "Component", "MonoBehaviour", "Rendering", "Physics"],
+        modelAnswer: [
+          "Unity는 Scene 안의 GameObject에 Component를 붙이는 컴포넌트 기반 엔진입니다. Transform, Renderer, Collider, MonoBehaviour 같은 컴포넌트가 조합되어 객체의 상태와 동작을 만듭니다.",
+          "런타임에서는 엔진의 PlayerLoop가 매 프레임 입력 처리, 스크립트 라이프사이클 호출, 애니메이션, 물리, 렌더링 준비, 렌더 명령 제출 같은 단계를 순서대로 실행합니다.",
+          "스크립트 관점에서는 Awake/OnEnable/Start로 초기화하고, Update에서 프레임 기반 로직, FixedUpdate에서 물리 타임스텝 로직, LateUpdate에서 카메라 추적 같은 후처리를 수행합니다.",
+          "물리는 고정 시간 간격으로 시뮬레이션되고, 렌더링은 카메라 기준 컬링, 정렬, 배칭, 셰이더/머티리얼 상태 설정 후 GPU에 draw call을 제출하는 방식으로 진행됩니다.",
+          "대부분의 Unity API는 메인 스레드에서 사용해야 하므로, 무거운 계산은 Job System/Burst/비동기 로딩으로 분리하되 결과를 메인 스레드 적용 단계와 안전하게 연결해야 합니다.",
+          "C# 스크립트는 Mono 또는 IL2CPP 런타임 위에서 실행되고, 관리 힙 할당은 GC 대상이므로 프레임 루프에서 불필요한 문자열 생성, LINQ, boxing, Instantiate/Destroy 반복을 줄이는 것이 중요합니다.",
+          "면접에서는 Unity를 단순한 Update 호출 모음이 아니라 에셋 로딩, 씬 객체 그래프, 컴포넌트 조합, PlayerLoop, 물리/렌더링 파이프라인이 연결된 런타임으로 설명하면 좋습니다.",
+        ],
+        followUps: [
+          {
+            question: "PlayerLoop를 왜 알아야 하나요?",
+            modelAnswer: [
+              "PlayerLoop는 Unity가 한 프레임을 처리하는 큰 실행 순서입니다.",
+              "입력 샘플링, Update, FixedUpdate, LateUpdate, 렌더링 준비가 어떤 순서로 실행되는지 알아야 초기화 순서 버그, 카메라 떨림, 물리 업데이트 불일치를 설명하고 고칠 수 있습니다.",
+              "필요하면 PlayerLoop API로 커스텀 시스템을 특정 단계에 삽입할 수 있지만, 일반 프로젝트에서는 실행 순서 이해와 책임 분리에 더 자주 쓰입니다.",
+            ],
+          },
+          {
+            question: "GameObject-Component 구조의 장단점은 무엇인가요?",
+            modelAnswer: [
+              "장점은 상속보다 조합으로 기능을 붙일 수 있어 디자이너 친화적이고 재사용성이 높다는 점입니다.",
+              "단점은 컴포넌트가 많아질수록 참조 관계와 실행 순서가 숨겨져 추적이 어려워지고, 대량 객체에서는 메모리 분산과 메인 스레드 Update 비용이 커질 수 있다는 점입니다.",
+              "그래서 대량 시뮬레이션은 MonoBehaviour 분산 업데이트보다 매니저/배치 처리, ECS, Job System, 데이터 지향 구조를 고려합니다.",
+            ],
+          },
+          {
+            question: "Update와 FixedUpdate를 어떻게 구분해서 쓰나요?",
+            modelAnswer: [
+              "Update는 렌더 프레임마다 호출되므로 입력 샘플링, UI, 일반 게임 로직에 적합합니다.",
+              "FixedUpdate는 고정 시간 간격으로 호출되어 Rigidbody 물리 적용처럼 물리 시뮬레이션과 맞아야 하는 로직에 적합합니다.",
+              "입력은 Update에서 받고 물리 적용은 FixedUpdate에서 처리하는 식으로 버퍼링하면 입력 누락과 물리 불일치를 줄일 수 있습니다.",
+            ],
+          },
+          {
+            question: "Coroutine은 별도 스레드인가요?",
+            modelAnswer: [
+              "아닙니다. Unity Coroutine은 대부분 메인 스레드에서 PlayerLoop 단계에 맞춰 이어 실행되는 상태 머신입니다.",
+              "yield return null, WaitForSeconds 같은 대기 조건으로 실행을 나눌 뿐 CPU 연산을 병렬 처리하지 않습니다.",
+              "무거운 계산을 코루틴으로 쪼개면 프레임 분산은 가능하지만, 병렬 처리가 필요하면 Job System, Task, 별도 스레드 설계를 검토해야 합니다.",
+            ],
+          },
+          {
+            question: "Unity API를 백그라운드 스레드에서 마음대로 호출하면 왜 위험한가요?",
+            modelAnswer: [
+              "대부분의 UnityEngine 객체와 씬 객체 접근은 메인 스레드 전제를 가집니다.",
+              "백그라운드 스레드에서 Transform, GameObject, Renderer 같은 API를 직접 만지면 스레드 안전성이 보장되지 않아 예외나 비정상 동작이 날 수 있습니다.",
+              "백그라운드에서는 순수 데이터 계산이나 파일/네트워크 작업을 하고, 결과 적용은 메인 스레드 큐나 Job 완료 후 단계에서 처리하는 방식이 안전합니다.",
+            ],
+          },
+          {
+            question: "렌더링은 스크립트 Update와 어떤 관계로 동작하나요?",
+            modelAnswer: [
+              "스크립트가 Transform, Animator, Renderer 상태를 갱신하면 그 결과를 바탕으로 카메라 컬링, 렌더 큐 정렬, 배칭, draw call 제출이 이어집니다.",
+              "CPU는 렌더 명령을 만들고 GPU는 셰이더 실행, 래스터라이즈, 블렌딩 등을 수행합니다.",
+              "프레임 저하는 스크립트 CPU, 렌더 스레드, GPU 중 어디가 병목인지 Profiler/Frame Debugger/RenderDoc으로 분리해야 합니다.",
+            ],
+          },
+          {
+            question: "Instantiate/Destroy를 자주 쓰면 왜 문제가 되나요?",
+            modelAnswer: [
+              "객체 생성/파괴는 메모리 할당, 컴포넌트 초기화, Transform 계층 갱신, GC 압박을 유발할 수 있습니다.",
+              "탄환, 이펙트, 데미지 텍스트처럼 자주 생기고 사라지는 객체는 Object Pool로 재사용하는 것이 일반적입니다.",
+              "다만 풀링도 생명주기 복잡도와 메모리 상주 비용이 있으므로 hot path 객체 중심으로 적용해야 합니다.",
+            ],
+          },
+        ],
+      },
       {
         id: "unity-lifecycle",
         question: "Awake, OnEnable, Start, Update, FixedUpdate, LateUpdate의 차이를 설명해보세요.",
