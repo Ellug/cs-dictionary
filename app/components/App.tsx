@@ -62,17 +62,17 @@ export default function App() {
     <>
       {/* 헤더: 타이틀 + 탭 + 검색 */}
       <div className="mb-3 border-b border-zinc-700 pb-2 flex items-center gap-3 flex-wrap">
-        <h1 className="text-lg font-bold text-yellow-400 tracking-widest uppercase shrink-0">
+        <h1 className="w-full sm:w-auto text-lg font-bold text-yellow-400 tracking-widest uppercase shrink-0">
           C# Quick Reference
         </h1>
 
         {/* 탭 버튼 */}
-        <div className="flex gap-1 shrink-0">
+        <div className="w-full sm:w-auto flex gap-1 shrink-0 overflow-x-auto pb-1 sm:pb-0">
           {TABS.map((t) => (
             <button
               key={t.id}
               onClick={() => handleTabChange(t.id)}
-              className={`px-2.5 py-0.5 rounded text-[13px] font-medium transition-colors border ${
+              className={`px-2.5 py-0.5 rounded text-[13px] font-medium transition-colors border shrink-0 ${
                 tab === t.id
                   ? t.activeClass
                   : "text-zinc-500 border-zinc-700 hover:text-zinc-300 hover:border-zinc-500"
@@ -84,7 +84,7 @@ export default function App() {
         </div>
 
         {/* 검색 */}
-        <div className="relative flex-1 max-w-xs">
+        <div className="relative w-full sm:flex-1 sm:max-w-xs">
           <span className="absolute left-2 top-1/2 -translate-y-1/2 text-zinc-500 text-xs select-none">
             /
           </span>
